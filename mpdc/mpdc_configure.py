@@ -28,8 +28,8 @@ def main():
     print('\n')
     config['mpdc']['collections'] = path
 
-    colors = input('>> Enable colors [Y/n]: ').lower()
-    if colors != 'n':
+    colors = input('>> Enable colors [Y/n]: ').lower() or 'y'
+    if colors == 'y':
         config['mpdc']['colors'] = 'red, green, blue'
     print('\n')
 
