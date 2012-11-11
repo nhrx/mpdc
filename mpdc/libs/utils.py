@@ -36,16 +36,6 @@ def write_cache(name, data):
         warning('Can\'t write cache in: ' + filepath)
 
 
-tmp_file = '/tmp/mpdc'
-
-def write_tmp_file(data):
-    try:
-        with open(tmp_file, 'w') as f:
-            f.write('\n'.join(data))
-    except IOError:
-        warning('Can\'t write temporary file in: ' + tmp_file)
-
-
 # --------------------------------
 # Some other functions
 # --------------------------------

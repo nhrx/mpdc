@@ -1,5 +1,6 @@
 # coding: utf-8
 import sys
+import shlex
 import argparse
 from subprocess import check_output
 
@@ -75,7 +76,7 @@ def crop(args):
 
 
 def mpc(args):
-    output = check_output('%s %s' % (mpd.mpc_c_str, args.command), shell=True)
+    output = check_output(mpd.mpc_c + shlex.split(args.command))
     print(output.decode().strip())
 
 

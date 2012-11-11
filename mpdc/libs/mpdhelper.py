@@ -1,10 +1,10 @@
 # coding: utf-8
-from subprocess import check_output
+from subprocess import check_output, Popen, PIPE, STDOUT
 
 import mpd
 
 from mpdc.libs.utils import is_cached, read_cache, write_cache, \
-                            write_tmp_file, tmp_file, format_mpc_output
+                            format_mpc_output
 
 
 # this class uses mpc or python-mpd2 depending on which provides the best
@@ -44,22 +44,22 @@ class MPDHelper:
 
     def add(self, songs_files):
         songs_files = self.sort(songs_files)
-        write_tmp_file(songs_files)
-        check_output('cat %s |%s add' % (tmp_file, self.mpc_c_str), shell=True)
+        p = Popen(self.mpc_c + ['add'], stdin=PIPE, stderr=STDOUT)
+        p.communicate(input=bytes('\n'.join(songs_files), 'utf-8'))
         self.first_lately_added_song = songs_files[0]
 
     def insert(self, songs_files):
         songs_files = self.sort(songs_files)
-        write_tmp_file(songs_files)
-        check_output('cat %s |%s insert' % (tmp_file, self.mpc_c_str),
-                     shell=True)
+        p = Popen(self.mpc_c + ['insert'], stdin=PIPE, stderr=STDOUT)
+        p.communicate(input=bytes('\n'.join(songs_files), 'utf-8'))
+        self.first_lately_added_song = songs_files[0]
 
     def remove(self, songs_files):
         playlist_pos = self.get_playlist_positions()
         songs_ids = [str(playlist_pos[song]) for song in songs_files
                      if song in playlist_pos]
-        write_tmp_file(songs_ids)
-        check_output('cat %s |%s del' % (tmp_file, self.mpc_c_str), shell=True)
+        p = Popen(self.mpc_c + ['del'], stdin=PIPE, stderr=STDOUT)
+        p.communicate(input=bytes('\n'.join(songs_ids), 'utf-8'))
 
     def replace(self, songs_files):
         self.clear()
