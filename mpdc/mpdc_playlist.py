@@ -2,7 +2,7 @@
 import sys
 import shlex
 import argparse
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 
 from mpdc.initialize import mpd
 from mpdc.libs.utils import input_box
@@ -76,8 +76,11 @@ def crop(args):
 
 
 def mpc(args):
-    output = check_output(mpd.mpc_c + shlex.split(args.command))
-    print(output.decode().strip())
+    try:
+        output = check_output(mpd.mpc_c + shlex.split(args.command))
+        print(output.decode().strip())
+    except CalledProcessError:
+        pass
 
 
 # --------------------------------
