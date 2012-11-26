@@ -38,6 +38,13 @@ def remove(args):
         mpd.remove(songs)
 
 
+def keep(args):
+    songs = parser.parse(args.collection)
+    remove_songs = [s for s in mpd.get_playlist_songs() if s not in songs]
+    if songs:
+        mpd.remove(remove_songs)
+
+
 def replace(args):
     songs = parser.parse(args.collection)
     if songs:
@@ -106,6 +113,10 @@ def main():
     remove_parser = subparsers.add_parser('rm')
     remove_parser.add_argument('collection')
     remove_parser.set_defaults(func=remove)
+
+    keep_parser = subparsers.add_parser('k')
+    keep_parser.add_argument('collection')
+    keep_parser.set_defaults(func=keep)
 
     replace_parser = subparsers.add_parser('re')
     replace_parser.add_argument('collection')
