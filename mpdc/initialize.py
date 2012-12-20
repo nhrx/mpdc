@@ -52,8 +52,8 @@ if not mpd.connect():
     warning('Unable to connect to the MPD server')
     sys.exit(0)
 
-if (not is_cached('allsongs') or
-    cache_last_modified('allsongs') < int(mpd.stats()['db_update'])):
+if (not is_cached('songs_tags') or
+    cache_last_modified('songs_tags') < int(mpd.stats()['db_update'])):
     mpd.update_cache()
 
 
@@ -62,9 +62,9 @@ if (not is_cached('allsongs') or
 # --------------------------------
 
 try:
-    open(config['mpdc']['collections'], 'r+')
+    open(config['mpdc']['collections'], 'r')
 except IOError:
-    warning('The collections file [%s] doesn\'t seem readable or writable' %
+    warning('The collections file [%s] doesn\'t seem readable' %
             config['mpdc']['collections'])
     sys.exit(0)
 
@@ -87,3 +87,14 @@ else:
     collectionsmanager.feed()
 
 collections = collectionsmanager.collections
+
+
+# --------------------------------
+# LastFM initialization
+# --------------------------------
+
+from mpdc.libs.lastfmhelper import LastfmHelper
+lastfm = LastfmHelper()
+
+if 'min_similarity' in config['mpdc']:
+    LastfmHelper.min_similarity = int(config['mpdc']['min_similarity']) / 100

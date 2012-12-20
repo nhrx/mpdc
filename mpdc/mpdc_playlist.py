@@ -98,47 +98,47 @@ def main():
     argparser = argparse.ArgumentParser(add_help=False)
     subparsers = argparser.add_subparsers()
 
-    add_parser = subparsers.add_parser('add')
-    add_parser.add_argument('collection')
-    add_parser.set_defaults(func=add)
+    add_p = subparsers.add_parser('add')
+    add_p.add_argument('collection')
+    add_p.set_defaults(func=add)
 
-    addp_parser = subparsers.add_parser('addp')
-    addp_parser.add_argument('collection')
-    addp_parser.set_defaults(func=addp)
+    addp_p = subparsers.add_parser('addp')
+    addp_p.add_argument('collection')
+    addp_p.set_defaults(func=addp)
 
-    insert_parser = subparsers.add_parser('ins')
-    insert_parser.add_argument('collection')
-    insert_parser.set_defaults(func=insert)
+    insert_p = subparsers.add_parser('ins')
+    insert_p.add_argument('collection')
+    insert_p.set_defaults(func=insert)
 
-    remove_parser = subparsers.add_parser('rm')
-    remove_parser.add_argument('collection')
-    remove_parser.set_defaults(func=remove)
+    remove_p = subparsers.add_parser('rm')
+    remove_p.add_argument('collection')
+    remove_p.set_defaults(func=remove)
 
-    keep_parser = subparsers.add_parser('k')
-    keep_parser.add_argument('collection')
-    keep_parser.set_defaults(func=keep)
+    keep_p = subparsers.add_parser('k')
+    keep_p.add_argument('collection')
+    keep_p.set_defaults(func=keep)
 
-    replace_parser = subparsers.add_parser('re')
-    replace_parser.add_argument('collection')
-    replace_parser.set_defaults(func=replace)
+    replace_p = subparsers.add_parser('re')
+    replace_p.add_argument('collection')
+    replace_p.set_defaults(func=replace)
 
-    replacep_parser = subparsers.add_parser('rep')
-    replacep_parser.add_argument('collection')
-    replacep_parser.set_defaults(func=replacep)
+    replacep_p = subparsers.add_parser('rep')
+    replacep_p.add_argument('collection')
+    replacep_p.set_defaults(func=replacep)
 
-    play_parser = subparsers.add_parser('p')
-    play_parser.add_argument('collection')
-    play_parser.set_defaults(func=play)
+    play_p = subparsers.add_parser('p')
+    play_p.add_argument('collection')
+    play_p.set_defaults(func=play)
 
-    clear_parser = subparsers.add_parser('clear')
-    clear_parser.set_defaults(func=clear)
+    clear_p = subparsers.add_parser('clear')
+    clear_p.set_defaults(func=clear)
 
-    crop_parser = subparsers.add_parser('crop')
-    crop_parser.set_defaults(func=crop)
+    crop_p = subparsers.add_parser('crop')
+    crop_p.set_defaults(func=crop)
 
-    mpc_parser = subparsers.add_parser(':')
-    mpc_parser.add_argument('command')
-    mpc_parser.set_defaults(func=mpc)
+    mpc_p = subparsers.add_parser(':')
+    mpc_p.add_argument('command')
+    mpc_p.set_defaults(func=mpc)
 
     if len(sys.argv) == 1:
         cmd = input_box('mpdc-playlist', 'Command for mpdc-playlist:')
@@ -147,7 +147,6 @@ def main():
         if cmd[0] == ':' and cmd[1] != ' ':
             cmd = ': ' + cmd[1:]
         args = argparser.parse_args(cmd.split(' ', 1))
-
     else:
         args = argparser.parse_args()
 

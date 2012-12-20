@@ -31,9 +31,11 @@ if which('mpc') is None or which('zenity') is None:
 else:
     setup(
         name='MPDC',
-        version='1.0rc1',
+        version='1.0rc2',
         license='MIT',
-        description='A XMMS2-like collections system for MPD',
+        description='A XMMS2-like collections system for MPD, aimed at ' \
+                    'helping you to feed and manipulate your playlist with ' \
+                    'great flexibility',
         author='nhrx.org',
         url='http://nhrx.org/mpdc',
         packages=find_packages(),

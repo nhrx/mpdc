@@ -2,12 +2,13 @@
 import re
 import sys
 import random
+from collections import defaultdict
 from subprocess import check_output, CalledProcessError
 
 from ply import lex
 from ply import yacc
 
-from mpdc.initialize import mpd, collections, enable_command
+from mpdc.initialize import mpd, collections, lastfm, enable_command
 from mpdc.libs.utils import format_mpc_output, warning
 
 
@@ -163,39 +164,35 @@ def p_expression_modifier(p):
         except ValueError:
             p[0] = p[1]
 
-    # N-random artists modifier - fixme: not really random
+    # N-random artists modifier
     elif re.match(r'^ra[0-9]+$', modifier):
-        p[1] = list(p[1])
-        random.shuffle(p[1])
-        random_artists = set()
+        artists = set()
         for song in p[1]:
-            if len(random_artists) < int(modifier[2:]):
-                random_artists.add(mpd.get_tag(song, 'artist'))
-            else:
-                break
-        matched_songs = []
-        for artist in random_artists:
-            matched_songs.extend(mpd.find('artist', artist))
-        p[0] = set([song for song in p[1] if song in matched_songs])
+            artists.add(mpd.get_tag(song, 'artist'))
+        try:
+            r_artists = set(random.sample(artists, int(modifier[2:])))
+        except ValueError:
+            p[0] = p[1]
+        else:
+            songs = []
+            for artist in r_artists:
+                songs.extend(mpd.find('artist', artist))
+            p[0] = set([song for song in p[1] if song in songs])
 
-    # N-random albums modifier - fixme: not really random
+    # N-random albums modifier
     elif re.match(r'^rb[0-9]+$', modifier):
-        p[1] = list(p[1])
-        random.shuffle(p[1])
-        random_couples = []
+        albums = set()
         for song in p[1]:
-            couple = {'album': mpd.get_tag(song, 'album'),
-                      'artist': mpd.get_tag(song, 'artist')}
-            if len(random_couples) < int(modifier[2:]):
-                if couple not in random_couples:
-                    random_couples.append(couple)
-            else:
-                break
-        matched_songs = []
-        for couple in random_couples:
-            matched_songs.extend(mpd.find_multiple(album=couple['album'],
-                                                   artist=couple['artist']))
-        p[0] = set([song for song in p[1] if song in matched_songs])
+            albums.add(mpd.get_tags(song, ('album', 'artist')))
+        try:
+            r_albums = set(random.sample(albums, int(modifier[2:])))
+        except ValueError:
+            p[0] = p[1]
+        else:
+            songs = []
+            for album, artist in r_albums:
+                songs.extend(mpd.find_multiple(album=album, artist=artist))
+            p[0] = set([song for song in p[1] if song in songs])
 
     # N-minutes-long modifier
     elif re.match(r'^d[0-9]+$', modifier):
@@ -210,6 +207,56 @@ def p_expression_modifier(p):
                 d += int(mpd.get_tag(song, 'time'))
             else:
                 break
+
+    # N-similar artists modifier
+    elif re.match(r'^i?sa[0-9]+$', modifier):
+        include = True if modifier[0] == 'i' else False
+        limit = int((modifier[3:] if include else modifier[2:]))
+        w_tags = defaultdict(int)
+        for song in p[1]:
+            tags = lastfm.get_artist_tags(mpd.get_tag(song, 'artist'))
+            for tag in tags:
+                w_tags[tag] += tags[tag]
+        if not w_tags:
+            p[0] = p[1] if include else set()
+        else:
+            songs = []
+            similar_artists = lastfm.get_similar_artists(w_tags)
+            for artist, score in similar_artists:
+                if not limit:
+                    break
+                matched_songs = mpd.find('artist', artist)
+                if not include:
+                    matched_songs = set(matched_songs) - p[1]
+                if matched_songs:
+                    songs.extend(matched_songs)
+                    limit -= 1
+            p[0] = set(songs)
+
+    # N-similar albums modifier
+    elif re.match(r'^i?sb[0-9]+$', modifier):
+        include = True if modifier[0] == 'i' else False
+        limit = int((modifier[3:] if include else modifier[2:]))
+        w_tags = defaultdict(int)
+        for song in p[1]:
+            tags = lastfm.get_album_tags(mpd.get_tag(song, 'album'),
+                                         mpd.get_tag(song, 'artist'))
+            for tag in tags:
+                w_tags[tag] += tags[tag]
+        if not w_tags:
+            p[0] = p[1] if include else set()
+        else:
+            songs = []
+            for (album, artist), score in lastfm.get_similar_albums(w_tags):
+                if not limit:
+                    break
+                matched_songs = mpd.find_multiple(album=album, artist=artist)
+                if not include:
+                    matched_songs = set(matched_songs) - p[1]
+                if matched_songs:
+                    songs.extend(matched_songs)
+                    limit -= 1
+            p[0] = set(songs)
 
     else:
         warning('Modifier [%s] doesn\'t exist' % modifier)

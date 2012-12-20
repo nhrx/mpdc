@@ -1,3 +1,12 @@
+Release 1.0rc2 (December 20, 2012)
+==================================
+
+* add support for Lastfm recommendations (new modifiers, commands & configuration option)
+* remove the option -g: mpdc-playlist and mpdc-collections now open an input box automatically
+* add a keep command for mpdc-playlist
+* modifiers |ra and |rb are now almost really random
+* change the location of the cache directory to ~/.cache/mpdc
+
 Release 1.0rc1 (November 6, 2012)
 =================================
 

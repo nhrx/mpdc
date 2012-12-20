@@ -72,7 +72,7 @@ class CollectionsManager:
         write_cache('collections', self.collections)
 
 
-# Human-readeable format -> dictionary of collections including MPD playlists
+# Human-readable format -> dictionary of collections including MPD playlists
 def raw_to_optimized(collections_raw):
     collections = OrderedDict()
     alias = ''
@@ -111,7 +111,7 @@ def raw_to_optimized(collections_raw):
                                      'songs':
                                        mpd.get_stored_playlist_songs(playlist)}
         else:
-            warning('MPD playlist [%s] was ignored beacause a collection of '
+            warning('MPD playlist [%s] was ignored because a collection with '
                     'the same name already exists' % playlist)
     return collections
 

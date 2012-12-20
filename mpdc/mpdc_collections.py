@@ -82,7 +82,6 @@ def find(args):
             songs_c = parser.parse('"' + esc_quotes(alias) + '"')
             if args.pattern in songs_c:
                 print(format_alias(alias))
-
     # assuming it's a collection
     else:
         songs = parser.parse(args.pattern)
@@ -115,33 +114,33 @@ def main():
     argparser = argparse.ArgumentParser(add_help=False)
     subparsers = argparser.add_subparsers()
 
-    listsongs_parser = subparsers.add_parser('ls')
-    listsongs_parser.add_argument('collection', nargs='?')
-    listsongs_parser.add_argument('-m', action='store_true')
-    listsongs_parser.add_argument('-p', action='store')
-    listsongs_parser.set_defaults(func=ls)
+    listsongs_p = subparsers.add_parser('ls')
+    listsongs_p.add_argument('collection', nargs='?')
+    listsongs_p.add_argument('-m', action='store_true')
+    listsongs_p.add_argument('-p', action='store')
+    listsongs_p.set_defaults(func=ls)
 
-    show_parser = subparsers.add_parser('show')
-    show_parser.add_argument('alias')
-    show_parser.add_argument('-m', action='store_true')
-    show_parser.set_defaults(func=show)
+    show_p = subparsers.add_parser('show')
+    show_p.add_argument('alias')
+    show_p.add_argument('-m', action='store_true')
+    show_p.set_defaults(func=show)
 
-    find_parser = subparsers.add_parser('find')
-    find_parser.add_argument('pattern')
-    find_parser.set_defaults(func=find)
+    find_p = subparsers.add_parser('find')
+    find_p.add_argument('pattern')
+    find_p.set_defaults(func=find)
 
-    addsongs_parser = subparsers.add_parser('addsongs')
-    addsongs_parser.add_argument('alias')
-    addsongs_parser.add_argument('collection')
-    addsongs_parser.set_defaults(func=add_songs)
+    addsongs_p = subparsers.add_parser('addsongs')
+    addsongs_p.add_argument('alias')
+    addsongs_p.add_argument('collection')
+    addsongs_p.set_defaults(func=add_songs)
 
-    removesongs_parser = subparsers.add_parser('rmsongs')
-    removesongs_parser.add_argument('alias')
-    removesongs_parser.add_argument('collection')
-    removesongs_parser.set_defaults(func=remove_songs)
+    removesongs_p = subparsers.add_parser('rmsongs')
+    removesongs_p.add_argument('alias')
+    removesongs_p.add_argument('collection')
+    removesongs_p.set_defaults(func=remove_songs)
 
-    removesongs_parser = subparsers.add_parser('check')
-    removesongs_parser.set_defaults(func=check)
+    removesongs_p = subparsers.add_parser('check')
+    removesongs_p.set_defaults(func=check)
 
     if len(sys.argv) == 1:
         cmd = input_box('mpdc-collections', 'Command for mpdc-collections:')
@@ -155,7 +154,6 @@ def main():
         else:
             cmd = cmd.split(' ', 1)
         args = argparser.parse_args(cmd)
-
     else:
         args = argparser.parse_args()
 

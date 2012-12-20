@@ -1,4 +1,5 @@
 # coding: utf-8
+from collections import OrderedDict
 from subprocess import check_output, Popen, PIPE, STDOUT
 
 import mpd
@@ -24,6 +25,8 @@ class MPDHelper:
         self.mpc_c_str = ' '.join(self.mpc_c)
 
         self.all_songs = None
+        self.all_songs_tags = None
+        self.all_songs_info = None
         self.first_lately_added_song = None
 
     def connect(self):
@@ -66,7 +69,6 @@ class MPDHelper:
         self.add(songs_files)
 
     def play(self, song_position=1):
-        # mpc starts at 1 whereas python-mpd2 starts at 0
         self.mpdclient.play(song_position - 1)
 
     def play_file(self, song_file):
@@ -99,53 +101,76 @@ class MPDHelper:
 
 # Database functions
 
-    def get_all_songs(self, update=False):
-        if self.all_songs is not None and not update:
-            pass
-        elif is_cached('allsongs') and not update:
-            self.all_songs = read_cache('allsongs')
-        else:
-            output = check_output(self.mpc_c + ['listall'])
-            self.all_songs = format_mpc_output(output.decode())
-            write_cache('allsongs', self.all_songs)
-        return self.all_songs
+    def get_all_songs(self):
+        return list(self.get_all_songs_tags())
 
-    def search(self, filter_name, pattern):
-        if filter_name == 'extension':
+    def get_all_songs_tags(self, update=False):
+        if self.all_songs_tags is not None and not update:
+            pass
+        elif is_cached('songs_tags') and not update:
+            self.all_songs_tags = read_cache('songs_tags')
+        else:
+            self.all_songs_tags = OrderedDict()
+            for song in self.mpdclient.listallinfo():
+                if 'file' in song:
+                    self.all_songs_tags[song['file']] = {
+                        'artist': song.get('artist', ''),
+                        'album': song.get('album', ''),
+                        'title': song.get('title', ''),
+                        'track': song.get('track', '')
+                    }
+            write_cache('songs_tags', self.all_songs_tags)
+        return self.all_songs_tags
+
+    def get_tag(self, filename, tag):
+        if tag in ('artist', 'album', 'title', 'track'):
+            return self.get_all_songs_tags()[filename][tag]
+        else:
+            return self.mpdclient.listallinfo(filename)[0].get(tag, '')
+
+    def get_tags(self, filename, tags_list=None):
+        if tags_list is None:
+            tags_list = ('artist', 'album', 'title', 'track')
+        return tuple([self.get_tag(filename, tag) for tag in tags_list])
+
+    def list_artists(self):
+        output = check_output(self.mpc_c + ['list', 'artist'])
+        return format_mpc_output(output.decode())
+
+    def list_albums(self):
+        albums = []
+        for song in self.get_all_songs_tags().values():
+            if song['album'] and song['artist']:
+                albums.append((song['album'], song['artist']))
+        return list(set(albums))
+
+    def search(self, filtername, pattern):
+        if filtername == 'extension':
             return [s for s in self.get_all_songs() if
                     s.lower().endswith(pattern.lower())]
         else:
-            output = check_output(self.mpc_c + ['search', filter_name,
+            output = check_output(self.mpc_c + ['search', filtername,
                                                 pattern])
             return format_mpc_output(output.decode())
 
-    def search_multiple(self, **tags):
+    def search_multiple(self, **filters):
         query = []
-        for tag, value in tags.items():
-            query.extend([tag, value])
+        for filtername, pattern in filters.items():
+            query.extend([filtername, pattern])
         return [song['file'] for song in self.mpdclient.search(*query)]
 
-    def find(self, filter_name, pattern):
-        if filter_name == 'extension':
+    def find(self, filtername, pattern):
+        if filtername == 'extension':
             return [s for s in self.get_all_songs() if s.endswith(pattern)]
         else:
             return [song['file'] for song in
-                    self.mpdclient.find(filter_name, pattern)]
+                    self.mpdclient.find(filtername, pattern)]
 
-    def find_multiple(self, **tags):
+    def find_multiple(self, **filters):
         query = []
-        for tag, value in tags.items():
-            query.extend([tag, value])
+        for filtername, pattern in filters.items():
+            query.extend([filtername, pattern])
         return [song['file'] for song in self.mpdclient.find(*query)]
-
-    def get_tag(self, filename, tag):
-        return self.mpdclient.listallinfo(filename)[0].get(tag, '')
-
-    def get_tags(self, filename, tags_list=None):
-        tags = self.mpdclient.listallinfo(filename)[0]
-        if tags_list is None:
-            tags_list = ('artist', 'album', 'title', 'track')
-        return tuple([tags.get(tag, '') for tag in tags_list])
 
 # Stored playlists functions
 
@@ -171,4 +196,4 @@ class MPDHelper:
         return [song for song in self.get_all_songs() if song in songs_files]
 
     def update_cache(self):
-        self.get_all_songs(update=True)
+        self.get_all_songs_tags(update=True)
