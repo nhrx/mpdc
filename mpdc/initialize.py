@@ -90,7 +90,7 @@ collections = collectionsmanager.collections
 
 
 # --------------------------------
-# LastFM initialization
+# Lastfm initialization
 # --------------------------------
 
 from mpdc.libs.lastfmhelper import LastfmHelper
