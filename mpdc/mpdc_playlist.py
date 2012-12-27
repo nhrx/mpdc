@@ -63,7 +63,7 @@ def replacep(args):
 
 
 def play(args):
-    songs = mpd.sort(parser.parse(args.collection))
+    songs = mpd.filter(parser.parse(args.collection))
     if songs:
         playlist_pos = mpd.get_playlist_positions()
         try:

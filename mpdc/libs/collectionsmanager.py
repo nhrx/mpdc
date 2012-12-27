@@ -25,7 +25,7 @@ class CollectionsManager:
             return f.readlines()
 
     def add_songs(self, alias, songs_files):
-        songs_files = mpd.sort(songs_files)
+        songs_files = mpd.filter(songs_files)
         if (not alias in self.collections or
             not 'mpd_playlist' in self.collections[alias]):
             for song in songs_files[:]:
@@ -39,7 +39,7 @@ class CollectionsManager:
                 self.collections[alias]['songs'] = songs_files
             if (not playlists_preserve_order or
                 not 'mpd_playlist' in self.collections[alias]):
-                self.collections[alias]['songs'] = mpd.sort(
+                self.collections[alias]['songs'] = mpd.filter(
                                               self.collections[alias]['songs'])
             if 'mpd_playlist' in self.collections[alias]:
                 mpd.clear_stored_playlist(alias)
@@ -48,7 +48,7 @@ class CollectionsManager:
         else:
             info('Collection [%s] will be created' % alias)
             self.collections[alias] = {}
-            self.collections[alias]['songs'] = mpd.sort(songs_files)
+            self.collections[alias]['songs'] = mpd.filter(songs_files)
         self.need_update = True
 
     def remove_songs(self, alias, songs_files):

@@ -39,7 +39,7 @@ def ls(args):
         for alias in collections:
             print(format_alias(alias))
     else:
-        display_songs(mpd.sort(parser.parse(args.collection)), args.m, args.p)
+        display_songs(mpd.filter(parser.parse(args.collection)), args.m, args.p)
 
 
 def show(args):
@@ -55,7 +55,7 @@ def show(args):
             print('songs:')
             print('------')
             if 'mpd_playlist' not in collections[args.alias]:
-                files = mpd.sort(collections[args.alias]['songs'])
+                files = mpd.filter(collections[args.alias]['songs'])
             else:
                 files = collections[args.alias]['songs']
             display_songs(files, args.m)

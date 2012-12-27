@@ -46,13 +46,13 @@ class MPDHelper:
 # Playlist functions
 
     def add(self, songs_files):
-        songs_files = self.sort(songs_files)
+        songs_files = self.filter(songs_files)
         p = Popen(self.mpc_c + ['add'], stdin=PIPE, stderr=STDOUT)
         p.communicate(input=bytes('\n'.join(songs_files), 'utf-8'))
         self.first_lately_added_song = songs_files[0]
 
     def insert(self, songs_files):
-        songs_files = self.sort(songs_files)
+        songs_files = self.filter(songs_files)
         p = Popen(self.mpc_c + ['insert'], stdin=PIPE, stderr=STDOUT)
         p.communicate(input=bytes('\n'.join(songs_files), 'utf-8'))
         self.first_lately_added_song = songs_files[0]
@@ -192,8 +192,9 @@ class MPDHelper:
 
 # Misc methods
 
-    def sort(self, songs_files):
-        return [song for song in self.get_all_songs() if song in songs_files]
+    def filter(self, songs_files):
+        all_songs = set(self.get_all_songs())
+        return [song for song in songs_files if song in all_songs]
 
     def update_cache(self):
         self.get_all_songs_tags(update=True)
