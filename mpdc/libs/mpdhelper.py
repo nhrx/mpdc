@@ -90,7 +90,7 @@ class MPDHelper:
         output = check_output(self.mpc_c + ['-f', '%file% %position%',
                                             'playlist'])
         lines = format_mpc_output(output.decode())
-        positions = {}
+        positions = OrderedDict()
         for line in lines:
             song, position = line.rsplit(' ', 1)
             positions[song] = int(position)

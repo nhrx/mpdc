@@ -41,7 +41,7 @@ def remove(args):
 def keep(args):
     songs = parser.parse(args.collection)
     remove_songs = [s for s in mpd.get_playlist_songs() if s not in songs]
-    if songs:
+    if remove_songs:
         mpd.remove(remove_songs)
 
 
@@ -67,7 +67,7 @@ def play(args):
     if songs:
         playlist_pos = mpd.get_playlist_positions()
         try:
-            first_matched_song = next((s for s in songs if s in playlist_pos))
+            first_matched_song = next(s for s in playlist_pos if s in songs)
         except StopIteration:
             pass
         else:
