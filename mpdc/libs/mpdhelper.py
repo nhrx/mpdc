@@ -190,10 +190,6 @@ class MPDHelper:
         for song_file in songs_files:
             self.mpdclient.playlistadd(name, song_file)
 
-    def remove_songs_stored_playlist(self, name, songs_files):
-        for song_file in songs_files:
-            self.mpdclient.playlistdelete(name, song_file)
-
     def clear_stored_playlist(self, name):
         self.mpdclient.playlistclear(name)
 
