@@ -113,6 +113,8 @@ def p_expression_collection(p):
                 warning('Error while executing `command` in collection [%s]' %
                         p[1])
                 sys.exit(0)
+        if 'sort' in collection:
+            p[0] = mpd.set_sort(p[0])
 
     elif p[1] == 'all':
         p[0] = OrderedSet(mpd.get_all_songs())
@@ -158,8 +160,12 @@ def p_expression_modifier(p):
     'expression : expression MODIFIER'
     modifier = (p[2][1:]).lstrip()
 
+    # Sorting modifier
+    if modifier == 's':
+        p[0] = mpd.set_sort(p[1])
+
     # N-random songs modifier
-    if re.match(r'^r[0-9]+$', modifier):
+    elif re.match(r'^r[0-9]+$', modifier):
         try:
             p[0] = OrderedSet(random.sample(p[1], int(modifier[1:])))
         except ValueError:

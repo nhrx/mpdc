@@ -71,8 +71,10 @@ def raw_to_optimized(collections_raw):
     alias = ''
     for line in collections_raw:
         if line.startswith('--'):
-            alias = line[2:].strip()
+            alias = (line[2:] if line[2] != '@' else line[3:]).strip()
             collections[alias] = {}
+            if line[2] == '@':
+                collections[alias]['sort'] = True
         elif alias:
             if line.startswith('command:'):
                 collections[alias]['command'] = line[8:].strip()
@@ -112,18 +114,20 @@ def raw_to_optimized(collections_raw):
 # Dictionary of collections -> human-readable format without MPD playlists
 def optimized_to_raw(collections_optimized):
     raw = ''
-    for alias in collections_optimized:
-        if 'mpd_playlist' in collections_optimized[alias]:
+    for alias, collection in collections_optimized.items():
+        if 'mpd_playlist' in collection:
             continue
-        raw += '--%s' % alias
-        if 'expression' in collections_optimized[alias]:
-            raw += '\n' + collections_optimized[alias]['expression'].rstrip()
-        if 'command' in collections_optimized[alias]:
-            raw += '\ncommand: ' + collections_optimized[alias]['command']
-        if ('songs' in collections_optimized[alias] and
-           collections_optimized[alias]['songs']):
+        if 'sort' in collection:
+            raw += '--@%s' % alias
+        else:
+            raw += '--%s' % alias
+        if 'expression' in collection:
+            raw += '\n' + collection['expression'].rstrip()
+        if 'command' in collection:
+            raw += '\ncommand: ' + collection['command']
+        if 'songs' in collection and collection['songs']:
             raw += '\nsongs:'
-            for song in collections_optimized[alias]['songs']:
+            for song in collection['songs']:
                 song_tags = mpd.get_tags(song)
                 raw += '\n    ' + repr_tags(song_tags)
         raw += '\n\n\n'

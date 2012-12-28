@@ -25,7 +25,9 @@ def display_songs(filenames, metadata=False, prefix=None):
 
 def format_alias(alias):
     if 'mpd_playlist' in collections[alias]:
-        return colorize('(playlist) ', colors[0]) + alias
+        return colorize('(playlist) ', colors[1]) + alias
+    if 'sort' in collections[alias]:
+        return colorize('@', colors[2]) + alias
     else:
         return alias
 
@@ -46,6 +48,8 @@ def show(args):
     if args.alias in collections:
         if 'mpd_playlist' in collections[args.alias]:
             info('This collection is stored as a MPD playlist\n')
+        if 'sort' in collections[args.alias]:
+            info('This collection is sorted automatically\n')
         if 'expression' in collections[args.alias]:
             print(collections[args.alias]['expression'])
         if 'command' in collections[args.alias]:

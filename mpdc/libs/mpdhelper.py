@@ -6,7 +6,7 @@ from subprocess import check_output, Popen, PIPE, STDOUT
 import mpd
 
 from mpdc.libs.utils import is_cached, read_cache, write_cache, \
-                            format_mpc_output
+                            format_mpc_output, OrderedSet
 
 
 # this class uses mpc or python-mpd2 depending on which provides the best
@@ -194,6 +194,10 @@ class MPDHelper:
         self.mpdclient.playlistclear(name)
 
 # Misc methods
+
+    def set_sort(self, songs_files):
+        all_songs = self.get_all_songs()
+        return OrderedSet([song for song in all_songs if song in songs_files])
 
     def update_cache(self):
         self.get_all_songs_tags(update=True)
