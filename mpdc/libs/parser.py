@@ -91,8 +91,8 @@ lexer = lex.lex(debug=0, reflags=re.UNICODE)
 # --------------------------------
 
 precedence = (
-    ('left', 'UNION', 'INTERSECTION', 'COMPLEMENT', 'SYMMETRIC_DIFFERENCE'),
     ('left', 'MODIFIER'),
+    ('left', 'UNION', 'INTERSECTION', 'COMPLEMENT', 'SYMMETRIC_DIFFERENCE'),
 )
 
 def p_expression_collection(p):
