@@ -2,7 +2,7 @@
 import ast
 from collections import OrderedDict
 
-from mpdc.initialize import mpd, playlists_preserve_order
+from mpdc.initialize import mpd
 from mpdc.libs.utils import is_cached, read_cache, write_cache, \
                             repr_tags, info, warning
 
@@ -25,30 +25,23 @@ class CollectionsManager:
             return f.readlines()
 
     def add_songs(self, alias, songs_files):
-        songs_files = mpd.filter(songs_files)
         if (not alias in self.collections or
             not 'mpd_playlist' in self.collections[alias]):
             for song in songs_files[:]:
                 if not all(mpd.get_tags(song)):
-                    warning('File not added, missing tag: [%s]' % song)
+                    warning('File not added, missing tag(s): [%s]' % song)
                     songs_files.remove(song)
         if alias in self.collections:
             if 'songs' in self.collections[alias]:
                 self.collections[alias]['songs'].extend(songs_files)
             else:
                 self.collections[alias]['songs'] = songs_files
-            if (not playlists_preserve_order or
-                not 'mpd_playlist' in self.collections[alias]):
-                self.collections[alias]['songs'] = mpd.filter(
-                                              self.collections[alias]['songs'])
             if 'mpd_playlist' in self.collections[alias]:
-                mpd.clear_stored_playlist(alias)
-                mpd.add_songs_stored_playlist(alias,
-                                              self.collections[alias]['songs'])
+                mpd.add_songs_stored_playlist(alias, songs_files)
         else:
             info('Collection [%s] will be created' % alias)
             self.collections[alias] = {}
-            self.collections[alias]['songs'] = mpd.filter(songs_files)
+            self.collections[alias]['songs'] = songs_files
         self.need_update = True
 
     def remove_songs(self, alias, songs_files):

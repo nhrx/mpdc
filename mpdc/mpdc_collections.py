@@ -39,7 +39,7 @@ def ls(args):
         for alias in collections:
             print(format_alias(alias))
     else:
-        display_songs(mpd.filter(parser.parse(args.collection)), args.m, args.p)
+        display_songs(parser.parse(args.collection), args.m, args.p)
 
 
 def show(args):
@@ -54,11 +54,7 @@ def show(args):
         if 'songs' in collections[args.alias]:
             print('songs:')
             print('------')
-            if 'mpd_playlist' not in collections[args.alias]:
-                files = mpd.filter(collections[args.alias]['songs'])
-            else:
-                files = collections[args.alias]['songs']
-            display_songs(files, args.m)
+            display_songs(collections[args.alias]['songs'], args.m)
     else:
         warning('Stored collection [%s] doesn\'t exist' % args.alias)
 
@@ -95,15 +91,15 @@ def find(args):
 
 
 def add_songs(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
-        collectionsmanager.add_songs(args.alias, list(songs))
+        collectionsmanager.add_songs(args.alias, songs)
 
 
 def remove_songs(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
-        collectionsmanager.remove_songs(args.alias, list(songs))
+        collectionsmanager.remove_songs(args.alias, songs)
 
 
 # --------------------------------

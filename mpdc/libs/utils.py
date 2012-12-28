@@ -1,9 +1,9 @@
 # coding: utf-8
 import os
 import pickle
+from collections import MutableSet
 from subprocess import check_output, CalledProcessError
 from math import sqrt
-import collections
 
 
 # --------------------------------
@@ -109,7 +109,7 @@ def input_box(title, message):
 # From http://code.activestate.com/recipes/576694/
 # --------------------------------
 
-class OrderedSet(collections.MutableSet):
+class OrderedSet(MutableSet):
     def __init__(self, iterable=None):
         self.end = end = []
         end += [None, end, end]         # sentinel node for doubly linked list
@@ -165,3 +165,6 @@ class OrderedSet(collections.MutableSet):
         if isinstance(other, OrderedSet):
             return len(self) == len(other) and list(self) == list(other)
         return set(self) == set(other)
+
+    issubset = property(lambda self: self.__le__)
+    issuperset = property(lambda self: self.__ge__)

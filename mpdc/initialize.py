@@ -29,11 +29,6 @@ if 'colors' in config['mpdc']:
         all(color in available_colors for color in user_colors)):
         colors = user_colors
 
-if config['mpdc'].get('playlists_preserve_order', 'n') == 'y':
-    playlists_preserve_order = True
-else:
-    playlists_preserve_order = False
-
 if config['mpdc'].get('enable_command', 'n') == 'y':
     enable_command = True
 else:

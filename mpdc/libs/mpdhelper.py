@@ -1,4 +1,5 @@
 # coding: utf-8
+from itertools import chain
 from collections import OrderedDict
 from subprocess import check_output, Popen, PIPE, STDOUT
 
@@ -46,22 +47,21 @@ class MPDHelper:
 # Playlist functions
 
     def add(self, songs_files):
-        songs_files = self.filter(songs_files)
-        p = Popen(self.mpc_c + ['add'], stdin=PIPE, stderr=STDOUT)
+        p = Popen(self.mpc_c + ['add'], stdin=PIPE, stdout=PIPE, stderr=STDOUT)
         p.communicate(input=bytes('\n'.join(songs_files), 'utf-8'))
         self.first_lately_added_song = songs_files[0]
 
     def insert(self, songs_files):
-        songs_files = self.filter(songs_files)
-        p = Popen(self.mpc_c + ['insert'], stdin=PIPE, stderr=STDOUT)
+        p = Popen(self.mpc_c + ['insert'], stdin=PIPE, stdout=PIPE,
+                  stderr=STDOUT)
         p.communicate(input=bytes('\n'.join(songs_files), 'utf-8'))
         self.first_lately_added_song = songs_files[0]
 
     def remove(self, songs_files):
-        playlist_pos = self.get_playlist_positions()
-        songs_ids = [str(playlist_pos[song]) for song in songs_files
-                     if song in playlist_pos]
-        p = Popen(self.mpc_c + ['del'], stdin=PIPE, stderr=STDOUT)
+        positions = self.get_playlist_positions()
+        songs_ids = [positions[s] for s in songs_files if s in positions]
+        songs_ids = map(str, list(chain.from_iterable(songs_ids)))
+        p = Popen(self.mpc_c + ['del'], stdin=PIPE, stdout=PIPE, stderr=STDOUT)
         p.communicate(input=bytes('\n'.join(songs_ids), 'utf-8'))
 
     def replace(self, songs_files):
@@ -72,9 +72,9 @@ class MPDHelper:
         self.mpdclient.play(song_position - 1)
 
     def play_file(self, song_file):
-        playlist_pos = self.get_playlist_positions()
-        if song_file in playlist_pos:
-            self.play(playlist_pos[song_file])
+        positions = self.get_playlist_positions()
+        if song_file in positions:
+            self.play(positions[song_file][0])
 
     def clear(self):
         self.mpdclient.clear()
@@ -93,7 +93,10 @@ class MPDHelper:
         positions = OrderedDict()
         for line in lines:
             song, position = line.rsplit(' ', 1)
-            positions[song] = int(position)
+            if song in positions:
+                positions[song].append(int(position))
+            else:
+                positions[song] = [int(position)]
         return positions
 
     def get_current_song(self):
@@ -187,14 +190,14 @@ class MPDHelper:
         for song_file in songs_files:
             self.mpdclient.playlistadd(name, song_file)
 
+    def remove_songs_stored_playlist(self, name, songs_files):
+        for song_file in songs_files:
+            self.mpdclient.playlistdelete(name, song_file)
+
     def clear_stored_playlist(self, name):
         self.mpdclient.playlistclear(name)
 
 # Misc methods
-
-    def filter(self, songs_files):
-        all_songs = set(self.get_all_songs())
-        return [song for song in songs_files if song in all_songs]
 
     def update_cache(self):
         self.get_all_songs_tags(update=True)

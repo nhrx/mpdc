@@ -125,8 +125,9 @@ def p_expression_collection(p):
         p[0] = OrderedSet(mpd.find('artist', mpd.get_tag(c_song, 'artist')))
     elif p[1] == 'B':
         c_song = mpd.get_current_song()
-        p[0] = OrderedSet(mpd.find_multiple(artist=mpd.get_tag(c_song, 'artist'),
-                                     album=mpd.get_tag(c_song, 'album')))
+        p[0] = OrderedSet(mpd.find_multiple(
+                                        artist=mpd.get_tag(c_song, 'artist'),
+                                        album=mpd.get_tag(c_song, 'album')))
     else:
         warning('Collection [%s] doesn\'t exist' % p[1])
         sys.exit(0)

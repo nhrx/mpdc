@@ -14,26 +14,26 @@ from mpdc.libs.parser import parser
 # --------------------------------
 
 def add(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
         mpd.add(songs)
 
 
 def addp(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
         mpd.add(songs)
         mpd.play_file(mpd.first_lately_added_song)
 
 
 def insert(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
         mpd.insert(songs)
 
 
 def remove(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
         mpd.remove(songs)
 
@@ -46,7 +46,7 @@ def keep(args):
 
 
 def replace(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
         mpd.replace(songs)
     else:
@@ -54,7 +54,7 @@ def replace(args):
 
 
 def replacep(args):
-    songs = parser.parse(args.collection)
+    songs = list(parser.parse(args.collection))
     if songs:
         mpd.replace(songs)
         mpd.play()
@@ -63,15 +63,15 @@ def replacep(args):
 
 
 def play(args):
-    songs = mpd.filter(parser.parse(args.collection))
+    songs = parser.parse(args.collection)
     if songs:
-        playlist_pos = mpd.get_playlist_positions()
+        positions = mpd.get_playlist_positions()
         try:
-            first_matched_song = next(s for s in playlist_pos if s in songs)
+            first_matched_song = next(s for s in positions if s in songs)
         except StopIteration:
             pass
         else:
-            mpd.play(playlist_pos[first_matched_song])
+            mpd.play(positions[first_matched_song][0])
 
 
 def clear(args):
