@@ -1,9 +1,12 @@
 # coding: utf-8
+import os
 import sys
 import shlex
 import argparse
+import subprocess
 
-from mpdc.initialize import mpd, collectionsmanager, collections, colors
+from mpdc.initialize import mpd, collectionsmanager, collections, config, \
+                            colors
 from mpdc.libs.utils import input_box, write_cache, esc_quotes, info, \
                             warning, colorize
 from mpdc.libs.parser import parser
@@ -106,6 +109,11 @@ def remove_songs(args):
         collectionsmanager.remove_songs(args.alias, songs)
 
 
+def edit(args):
+    editor = os.environ.get('VISUAL') or os.environ.get('EDITOR', 'nano')
+    subprocess.call([editor, config['mpdc']['collections']])
+
+
 # --------------------------------
 # Commands parser
 # --------------------------------
@@ -141,6 +149,9 @@ def main():
 
     check_p = subparsers.add_parser('check')
     check_p.set_defaults(func=check)
+
+    edit_p = subparsers.add_parser('edit')
+    edit_p.set_defaults(func=edit)
 
     if len(sys.argv) == 1:
         cmd = input_box('mpdc-collections', 'Command for mpdc-collections:')
