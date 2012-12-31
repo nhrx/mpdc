@@ -139,8 +139,8 @@ def main():
     removesongs_p.add_argument('collection')
     removesongs_p.set_defaults(func=remove_songs)
 
-    removesongs_p = subparsers.add_parser('check')
-    removesongs_p.set_defaults(func=check)
+    check_p = subparsers.add_parser('check')
+    check_p.set_defaults(func=check)
 
     if len(sys.argv) == 1:
         cmd = input_box('mpdc-collections', 'Command for mpdc-collections:')
