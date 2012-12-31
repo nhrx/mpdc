@@ -95,6 +95,11 @@ precedence = (
     ('left', 'UNION', 'INTERSECTION', 'COMPLEMENT', 'SYMMETRIC_DIFFERENCE'),
 )
 
+def exclude_songs(songs):
+    if 'exclude' in collections and 'special' in collections['exclude']:
+        return songs - parser.parse('exclude')
+    return songs
+
 def p_expression_collection(p):
     'expression : COLLECTION'
     if p[1] in collections:
@@ -166,6 +171,7 @@ def p_expression_modifier(p):
 
     # N-random songs modifier
     elif re.match(r'^r[0-9]+$', modifier):
+        p[1] = exclude_songs(p[1])
         try:
             p[0] = OrderedSet(random.sample(p[1], int(modifier[1:])))
         except ValueError:
@@ -173,6 +179,7 @@ def p_expression_modifier(p):
 
     # N-random artists modifier
     elif re.match(r'^ra[0-9]+$', modifier):
+        p[1] = exclude_songs(p[1])
         artists = OrderedSet()
         for song in p[1]:
             artists.add(mpd.get_tag(song, 'artist'))
@@ -188,6 +195,7 @@ def p_expression_modifier(p):
 
     # N-random albums modifier
     elif re.match(r'^rb[0-9]+$', modifier):
+        p[1] = exclude_songs(p[1])
         albums = OrderedSet()
         for song in p[1]:
             albums.add(mpd.get_tags(song, ('album', 'artist')))
@@ -203,6 +211,7 @@ def p_expression_modifier(p):
 
     # N-minutes-long modifier
     elif re.match(r'^d[0-9]+$', modifier):
+        p[1] = exclude_songs(p[1])
         total_duration = int(modifier[1:]) * 60
         d = 0
         p[0] = OrderedSet()

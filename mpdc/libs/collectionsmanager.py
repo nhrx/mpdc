@@ -71,10 +71,12 @@ def raw_to_optimized(collections_raw):
     alias = ''
     for line in collections_raw:
         if line.startswith('--'):
-            alias = (line[2:] if line[2] != '@' else line[3:]).strip()
+            alias = (line[2:] if line[2] not in '@#' else line[3:]).strip()
             collections[alias] = {}
             if line[2] == '@':
                 collections[alias]['sort'] = True
+            elif line[2] == '#':
+                collections[alias]['special'] = True
         elif alias:
             if line.startswith('command:'):
                 collections[alias]['command'] = line[8:].strip()
@@ -117,8 +119,10 @@ def optimized_to_raw(collections_optimized):
     for alias, collection in collections_optimized.items():
         if 'mpd_playlist' in collection:
             continue
-        if 'sort' in collection:
+        elif 'sort' in collection:
             raw += '--@%s' % alias
+        elif 'special' in collection:
+            raw += '--#%s' % alias
         else:
             raw += '--%s' % alias
         if 'expression' in collection:
