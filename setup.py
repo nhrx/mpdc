@@ -9,7 +9,7 @@ except ImportError:
 
 setup(
     name='MPDC',
-    version='1.0rc2',
+    version='1.0',
     license='MIT',
     description='A XMMS2-like collections system for MPD, aimed at '
                 'helping you to feed and manipulate your playlist with '
