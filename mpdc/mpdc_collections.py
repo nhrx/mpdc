@@ -2,6 +2,7 @@
 import os
 import sys
 import shlex
+import curses
 import argparse
 import subprocess
 
@@ -13,15 +14,28 @@ from mpdc.libs.parser import parser
 
 
 def display_songs(filenames, metadata=False, prefix=None):
+    if metadata:
+        curses.setupterm()
+        col = curses.tigetnum('cols')
+        a_w = int(col * 0.25) - 1
+        b_w = t_w = int(col * 0.375) - 1
+        print('%s %s %s' % ('ARTIST'.ljust(a_w), 'TITLE'.ljust(t_w), 'ALBUM'))
+        print('%s %s %s' % ('-' * a_w, '-' * b_w, '-' * t_w))
     for song in filenames:
         if metadata:
-            tags = ('artist', 'album', 'title')
-            artist, album, title = mpd.get_tags(song, tags)
-            print('%s - %s - %s' % (colorize(artist, colors[0]),
-                                    colorize(album, colors[1]),
-                                    colorize(title, colors[2])))
+            tags = ('artist', 'title', 'album')
+            artist, title, album = mpd.get_tags(song, tags, empty='<empty>')
+            if len(artist) > a_w - 1:
+                artist = artist[:a_w - 3] + '...'
+            if len(title) > t_w - 1:
+                title = title[:t_w - 3] + '...'
+            if len(album) > b_w - 1:
+                album = album[:b_w - 3] + '...'
+            print('%s %s %s' % (colorize(artist.ljust(a_w), colors[0]),
+                                colorize(title.ljust(t_w), colors[1]),
+                                colorize(album, colors[2])))
         elif prefix is not None:
-            print(prefix + song)
+            print(os.path.join(prefix, song))
         else:
             print(song)
 

@@ -125,16 +125,16 @@ class MPDHelper:
             write_cache('songs_tags', self.all_songs_tags)
         return self.all_songs_tags
 
-    def get_tag(self, filename, tag):
+    def get_tag(self, filename, tag, empty=''):
         if tag in ('artist', 'album', 'title', 'track'):
-            return self.get_all_songs_tags()[filename][tag]
+            return self.get_all_songs_tags()[filename][tag] or empty
         else:
-            return self.mpdclient.listallinfo(filename)[0].get(tag, '')
+            return self.mpdclient.listallinfo(filename)[0].get(tag, empty)
 
-    def get_tags(self, filename, tags_list=None):
+    def get_tags(self, filename, tags_list=None, empty=''):
         if tags_list is None:
             tags_list = ('artist', 'album', 'title', 'track')
-        return tuple([self.get_tag(filename, tag) for tag in tags_list])
+        return tuple([self.get_tag(filename, tag, empty) for tag in tags_list])
 
     def list_artists(self):
         output = check_output(self.mpc_c + ['list', 'artist'])
