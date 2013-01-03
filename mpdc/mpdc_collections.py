@@ -13,8 +13,8 @@ from mpdc.libs.utils import input_box, write_cache, esc_quotes, info, \
 from mpdc.libs.parser import parser
 
 
-def display_songs(filenames, metadata=False, prefix=None):
-    if metadata:
+def display_songs(filenames, path=None):
+    if path is None:
         curses.setupterm()
         col = curses.tigetnum('cols')
         a_w = int(col * 0.25) - 1
@@ -22,7 +22,7 @@ def display_songs(filenames, metadata=False, prefix=None):
         print('%s %s %s' % ('ARTIST'.ljust(a_w), 'TITLE'.ljust(t_w), 'ALBUM'))
         print('%s %s %s' % ('-' * a_w, '-' * b_w, '-' * t_w))
     for song in filenames:
-        if metadata:
+        if path is None:
             tags = ('artist', 'title', 'album')
             artist, title, album = mpd.get_tags(song, tags, empty='<empty>')
             if len(artist) > a_w - 1:
@@ -34,10 +34,8 @@ def display_songs(filenames, metadata=False, prefix=None):
             print('%s %s %s' % (colorize(artist.ljust(a_w), colors[0]),
                                 colorize(title.ljust(t_w), colors[1]),
                                 colorize(album, colors[2])))
-        elif prefix is not None:
-            print(os.path.join(prefix, song))
         else:
-            print(song)
+            print(os.path.join(path, song))
 
 
 def format_alias(alias):
@@ -60,7 +58,7 @@ def ls(args):
         for alias in collections:
             print(format_alias(alias))
     else:
-        display_songs(parser.parse(args.collection), args.m, args.p)
+        display_songs(parser.parse(args.collection), args.p)
 
 
 def show(args):
@@ -79,7 +77,7 @@ def show(args):
         if 'songs' in collections[args.alias]:
             print('songs:')
             print('------')
-            display_songs(collections[args.alias]['songs'], args.m)
+            display_songs(collections[args.alias]['songs'], args.p)
     else:
         warning('Stored collection [%s] doesn\'t exist' % args.alias)
 
@@ -142,13 +140,12 @@ def main():
 
     listsongs_p = subparsers.add_parser('ls')
     listsongs_p.add_argument('collection', nargs='?')
-    listsongs_p.add_argument('-m', action='store_true')
-    listsongs_p.add_argument('-p', action='store')
+    listsongs_p.add_argument('-p', nargs='?', const='')
     listsongs_p.set_defaults(func=ls)
 
     show_p = subparsers.add_parser('show')
     show_p.add_argument('alias')
-    show_p.add_argument('-m', action='store_true')
+    show_p.add_argument('-p', nargs='?', const='')
     show_p.set_defaults(func=show)
 
     find_p = subparsers.add_parser('find')
