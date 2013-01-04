@@ -22,17 +22,23 @@ except KeyError:
     warning('Invalid configuration file')
     sys.exit(0)
 
-colors = ['none', 'none', 'none']
+colors = ['none']
 if 'colors' in config['mpdc']:
     user_colors = [s.strip() for s in config['mpdc']['colors'].split(',')]
-    if (len(user_colors) == 3 and
-        all(color in available_colors for color in user_colors)):
+    if all(color in available_colors for color in user_colors):
         colors = user_colors
 
-if config['mpdc'].get('enable_command', 'n') == 'y':
-    enable_command = True
-else:
-    enable_command = False
+columns = ['artist', 'title', 'album']
+available_columns = ['artist', 'album', 'title', 'track', 'genre', 'date',
+                     'time', 'filename']
+if 'columns' in config['mpdc']:
+    user_columns = [s.strip() for s in config['mpdc']['columns'].split(',')]
+    if (all(column in available_columns for column in user_columns)):
+        columns = user_columns
+
+enable_command = config['mpdc'].get('enable_command', 'n') == 'y'
+enable_pager = config['mpdc'].get('enable_pager', 'n') == 'y'
+pager = config['mpdc'].get('pager', 'less -R')
 
 
 # --------------------------------

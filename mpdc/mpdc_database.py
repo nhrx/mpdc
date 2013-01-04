@@ -25,7 +25,7 @@ def check(args):
         if missing_tags:
             warning('You should tag [%s]' % colorize(song, colors[0]))
             print('missing tag(s): %s' % colorize(', '.join(missing_tags),
-                                                  colors[1]))
+                                                  colors[1 % len(colors)]))
         else:
             songs.append(tuple(sorted(tags.items())))
     duplicates = [dict(tags) for tags, nb in Counter(songs).items() if nb > 1]
@@ -37,7 +37,7 @@ def check(args):
                                                                tags['album'],
                                                                tags['title'],
                                                                tags['track']]),
-                                                    colors[1]))
+                                                    colors[1 % len(colors)]))
             files_matched = mpd.find_multiple(**tags)
             print('files matched: \n%s\n' % colorize('\n'.join(files_matched),
                                                      colors[0]))

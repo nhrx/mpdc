@@ -30,8 +30,10 @@ def main():
 
     colors = input('>> Enable colors [Y/n]: ').lower() or 'y'
     if colors == 'y':
-        config['mpdc']['colors'] = 'red, green, blue'
+        config['mpdc']['colors'] = 'green, red, blue'
     print('\n')
+
+    config['mpdc']['columns'] = 'artist, title, album'
 
     filepath = os.path.expanduser('~/.mpdc')
     try:
