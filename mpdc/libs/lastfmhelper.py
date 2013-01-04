@@ -109,6 +109,26 @@ class LastfmHelper:
                 return {}
             return None
 
+    def search_artists(self, pattern):
+        for artist, tags in self.artists_tags.items():
+            if any(pattern in tag for tag in tags):
+                yield artist
+
+    def find_artists(self, pattern):
+        for artist, tags in self.artists_tags.items():
+            if pattern in tags:
+                yield artist
+
+    def search_albums(self, pattern):
+        for album, tags in self.albums_tags.items():
+            if any(pattern in tag for tag in tags):
+                yield album
+
+    def find_albums(self, pattern):
+        for album, tags in self.albums_tags.items():
+            if pattern in tags:
+                yield album
+
     def get_similar_artists(self, query):
         if not self.artists_tags:
             warning('You should update the LastFM database')

@@ -23,7 +23,9 @@ filters_alias = {
     'p': 'performer',
     'f': 'filename',
     'e': 'extension',
-    'x': 'any'
+    'x': 'any',
+    'l': 'lastfm_a',
+    'r': 'lastfm_b'
 }
 
 
@@ -32,10 +34,11 @@ filters_alias = {
 # --------------------------------
 
 tokens = (
-    'FILTER', 'FILTER_EXACT', 'MODIFIER', 'COLLECTION',
+    'FILTER', 'MODIFIER', 'COLLECTION',
     'UNION', 'INTERSECTION', 'COMPLEMENT', 'SYMMETRIC_DIFFERENCE',
     'LPAREN', 'RPAREN',
 )
+
 
 t_UNION = r'\+'
 t_INTERSECTION = r'\.'
@@ -45,23 +48,16 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_MODIFIER = r'\|[ ]*\w+'
 
+
 def t_FILTER(t):
-    r'([abtngdcpfex]{1}"(?:[^"\\]|\\.)*") |' \
-    r'([abtngdcpfex]{1}\'(?:[^\'\\]|\\.)*\')'
+    r'([abtngdcpfexlr]{1}"(?:[^"\\]|\\.)*") |' \
+    r'([abtngdcpfexlr]{1}\'(?:[^\'\\]|\\.)*\')'
     if t.value[1] == "'":
         t.value = t.value.replace(r"\'", "'")
     else:
         t.value = t.value.replace(r'\"', '"')
     return t
 
-def t_FILTER_EXACT(t):
-    r'([ABTNGDCPFEX]{1}"(?:[^"\\]|\\.)*") |' \
-    r'([ABTNGDCPFEX]{1}\'(?:[^\'\\]|\\.)*\')'
-    if t.value[1] == "'":
-        t.value = t.value.replace(r"\'", "'")
-    else:
-        t.value = t.value.replace(r'\"', '"')
-    return t
 
 def t_COLLECTION(t):
     r'\w+ |' \
@@ -73,17 +69,15 @@ def t_COLLECTION(t):
         t.value = t.value.replace(r"\'", "'")[1:-1]
     return t
 
-def t_newline(t):
-    r'\n+'
-    t.lexer.lineno += t.value.count('\n')
 
 def t_error(t):
     warning('Illegal character `%s`' % t.value[0])
     sys.exit(0)
 
-t_ignore = ' \t'
 
-lexer = lex.lex(debug=0, reflags=re.UNICODE)
+t_ignore = ' \t\n'
+
+lexer = lex.lex(debug=0, reflags=re.UNICODE|re.IGNORECASE)
 
 
 # --------------------------------
@@ -95,10 +89,14 @@ precedence = (
     ('left', 'UNION', 'INTERSECTION', 'COMPLEMENT', 'SYMMETRIC_DIFFERENCE'),
 )
 
+
 def exclude_songs(songs):
     if 'exclude' in collections and 'special' in collections['exclude']:
-        return songs - parser.parse('exclude')
+        ex_songs = parser.parse('exclude',
+                   lexer=lex.lex(debug=0, reflags=re.UNICODE|re.IGNORECASE))
+        return songs - ex_songs
     return songs
+
 
 def p_expression_collection(p):
     'expression : COLLECTION'
@@ -106,8 +104,8 @@ def p_expression_collection(p):
         collection = collections[p[1]]
         p[0] = OrderedSet()
         if 'expression' in collection:
-            p[0] |= p.parser.parse(collection['expression'],
-                                   lexer=lex.lex(debug=0, reflags=re.UNICODE))
+            p[0] |= parser.parse(collection['expression'],
+                    lexer=lex.lex(debug=0, reflags=re.UNICODE|re.IGNORECASE))
         if 'songs' in collection:
             p[0] |= OrderedSet(collection['songs'])
         if enable_command and 'command' in collection:
@@ -120,7 +118,6 @@ def p_expression_collection(p):
                 sys.exit(0)
         if 'sort' in collection:
             p[0] = mpd.set_sort(p[0])
-
     elif p[1] == 'all':
         p[0] = OrderedSet(mpd.get_all_songs())
     elif p[1] == 'c':
@@ -133,19 +130,40 @@ def p_expression_collection(p):
     elif p[1] == 'B':
         c_song = mpd.get_current_song()
         p[0] = OrderedSet(mpd.find_multiple(
-                                        artist=mpd.get_tag(c_song, 'artist'),
-                                        album=mpd.get_tag(c_song, 'album')))
+                                artist=mpd.get_tag(c_song, 'artist'),
+                                album=mpd.get_tag(c_song, 'album')))
     else:
         warning('Collection [%s] doesn\'t exist' % p[1])
         sys.exit(0)
 
+
 def p_expression_filter(p):
     'expression : FILTER'
-    p[0] = OrderedSet(mpd.search(filters_alias[p[1][0]], p[1][2:-1]))
+    exact = True if p[1][0].isupper() else False
+    name = filters_alias[p[1][0].lower()]
+    pattern = p[1][2:-1]
+    if name == 'lastfm_a':
+        p[0] = OrderedSet()
+        if exact:
+            artists = lastfm.find_artists(pattern)
+        else:
+            artists = lastfm.search_artists(pattern)
+        for artist in artists:
+            p[0] |= mpd.find('artist', artist)
+    elif name == 'lastfm_b':
+        p[0] = OrderedSet()
+        if exact:
+            albums = lastfm.find_albums(pattern)
+        else:
+            albums = lastfm.search_albums(pattern)
+        for album, artist in albums:
+            p[0] |= mpd.find_multiple(artist=artist, album=album)
+        p[0] = mpd.set_sort(p[0])
+    elif exact:
+        p[0] = OrderedSet(mpd.find(name, pattern))
+    else:
+        p[0] = OrderedSet(mpd.search(name, pattern))
 
-def p_expression_filter_exact(p):
-    'expression : FILTER_EXACT'
-    p[0] = OrderedSet(mpd.find(filters_alias[(p[1][0]).lower()], p[1][2:-1]))
 
 def p_expression_operations(p):
     '''expression : expression UNION expression
@@ -160,6 +178,7 @@ def p_expression_operations(p):
         p[0] = p[1] & p[3]
     elif p[2] == '%':
         p[0] = p[1] ^ p[3]
+
 
 def p_expression_modifier(p):
     'expression : expression MODIFIER'
@@ -278,13 +297,16 @@ def p_expression_modifier(p):
         warning('Modifier [%s] doesn\'t exist' % modifier)
         sys.exit(0)
 
+
 def p_expression_parenthesized(p):
     'expression : LPAREN expression RPAREN'
     p[0] = p[2]
 
+
 def p_error(t):
     warning('Syntax error')
     sys.exit(0)
+
 
 parser = yacc.yacc(debug=0, outputdir='/tmp/')
 # parser.parse(<collection>) will return a set of filenames
