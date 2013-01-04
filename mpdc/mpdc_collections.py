@@ -21,8 +21,10 @@ def display_songs(filenames, path=None):
         b_w = t_w = int(col * 0.375) - 1
         print('%s %s %s' % ('ARTIST'.ljust(a_w), 'TITLE'.ljust(t_w), 'ALBUM'))
         print('%s %s %s' % ('-' * a_w, '-' * b_w, '-' * t_w))
+        current_song = mpd.get_current_song()
     for song in filenames:
         if path is None:
+            bold = True if song == current_song else False
             tags = ('artist', 'title', 'album')
             artist, title, album = mpd.get_tags(song, tags, empty='<empty>')
             if len(artist) > a_w - 1:
@@ -31,9 +33,9 @@ def display_songs(filenames, path=None):
                 title = title[:t_w - 3] + '...'
             if len(album) > b_w - 1:
                 album = album[:b_w - 3] + '...'
-            print('%s %s %s' % (colorize(artist.ljust(a_w), colors[0]),
-                                colorize(title.ljust(t_w), colors[1]),
-                                colorize(album, colors[2])))
+            print('%s %s %s' % (colorize(artist.ljust(a_w), colors[0], bold),
+                                colorize(title.ljust(t_w), colors[1], bold),
+                                colorize(album, colors[2], bold)))
         else:
             print(os.path.join(path, song))
 
