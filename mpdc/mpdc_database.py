@@ -44,33 +44,43 @@ def check(args):
 
 
 def lastfm_update_artists(args):
-    artists_tags = lastfm.artists_tags
-    missing_artists = sorted(mpd.list_artists())
-    if artists_tags:
-        missing_artists = [artist for artist in missing_artists
-                           if artist not in artists_tags]
+    tags = lastfm.artists_tags
+    artists = sorted(mpd.list_artists())
+    extra_artists = [artist for artist in tags if artist not in artists]
+    info('Will remove datas for %s extra artist(s)' % len(extra_artists))
+    for k in extra_artists:
+        del tags[k]
+    if tags:
+        missing_artists = [artist for artist in artists if artist not in tags]
+    else:
+        missing_artists = artists
     info('Will fetch datas for %s missing artist(s)' % len(missing_artists))
     for artist in missing_artists:
         print('Fetching %s' % artist)
-        tags = lastfm.get_artist_tags(artist, update=True)
-        if tags is not None:
-            artists_tags[artist] = tags
-    write_cache('artists_tags', artists_tags)
+        artist_tags = lastfm.get_artist_tags(artist, update=True)
+        if artist_tags is not None:
+            tags[artist] = artist_tags
+    write_cache('artists_tags', tags)
 
 
 def lastfm_update_albums(args):
-    albums_tags = lastfm.albums_tags
-    missing_albums = sorted(mpd.list_albums(), key=itemgetter(1))
-    if albums_tags:
-        missing_albums = [album for album in missing_albums
-                          if album not in albums_tags]
+    tags = lastfm.albums_tags
+    albums = sorted(mpd.list_albums(), key=itemgetter(1))
+    extra_albums = [album for album in tags if album not in albums]
+    info('Will remove datas for %s extra album(s)' % len(extra_albums))
+    for k in extra_albums:
+        del tags[k]
+    if tags:
+        missing_albums = [album for album in albums if album not in tags]
+    else:
+        missing_album = albums
     info('Will fetch datas for %s missing album(s)' % len(missing_albums))
     for album, artist in missing_albums:
         print('Fetching %s / %s' % (artist, album))
-        tags = lastfm.get_album_tags(album, artist, update=True)
-        if tags is not None:
-            albums_tags[(album, artist)] = tags
-    write_cache('albums_tags', albums_tags)
+        album_tags = lastfm.get_album_tags(album, artist, update=True)
+        if album_tags is not None:
+            tags[(album, artist)] = album_tags
+    write_cache('albums_tags', tags)
 
 
 # --------------------------------
