@@ -1,11 +1,15 @@
 # coding: utf-8
 import os
+import argparse
 from configparser import ConfigParser
 
 from mpdc.libs.utils import info, warning
 
 
-def main():
+def configure(args):
+    if args.switch:
+        change_default_profile(args.switch)
+        return
     config = ConfigParser()
 
     config.add_section('profiles')
@@ -43,6 +47,34 @@ def main():
             info('Writing configuration file in: ' + filepath)
     except IOError:
         warning('Can\'t write configuration file in: ' + filepath)
+
+
+def change_default_profile(profile):
+    config = ConfigParser()
+    filepath = os.path.expanduser('~/.mpdc')
+    if not config.read(filepath):
+        warning('Can\'t read the configuration file, run mpdc-configure')
+        return
+    config['profiles']['default'] = str(profile)
+    try:
+        with open(filepath, 'w') as configfile:
+            config.write(configfile)
+            info('Writing configuration file in: ' + filepath)
+    except IOError:
+        warning('Can\'t write configuration file in: ' + filepath)
+
+
+# --------------------------------
+# Commands parser
+# --------------------------------
+
+def main():
+    argparser = argparse.ArgumentParser(add_help=False)
+    argparser.set_defaults(func=configure)
+    argparser.add_argument('--switch', type=int, action='store')
+
+    args = argparser.parse_args()
+    args.func(args)
 
 if __name__ == '__main__':
     main()
