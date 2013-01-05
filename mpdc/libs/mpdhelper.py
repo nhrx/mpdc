@@ -101,7 +101,7 @@ class MPDHelper:
 
     def get_current_song(self):
         song = self.mpdclient.currentsong()
-        return song.get('file', '')
+        return song.get('file', None)
 
 # Database functions
 

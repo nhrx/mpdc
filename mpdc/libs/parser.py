@@ -100,9 +100,9 @@ def exclude_songs(songs):
 
 def p_expression_collection(p):
     'expression : COLLECTION'
+    p[0] = OrderedSet()
     if p[1] in collections:
         collection = collections[p[1]]
-        p[0] = OrderedSet()
         if 'expression' in collection:
             p[0] |= parser.parse(collection['expression'],
                     lexer=lex.lex(debug=0, reflags=re.UNICODE|re.IGNORECASE))
@@ -123,15 +123,20 @@ def p_expression_collection(p):
     elif p[1] == 'c':
         p[0] = OrderedSet(mpd.get_playlist_songs())
     elif p[1] == 'C':
-        p[0] = OrderedSet([mpd.get_current_song()])
+        c_song = mpd.get_current_song()
+        if c_song is not None:
+            p[0] = OrderedSet([c_song])
     elif p[1] == 'A':
         c_song = mpd.get_current_song()
-        p[0] = OrderedSet(mpd.find('artist', mpd.get_tag(c_song, 'artist')))
+        if c_song is not None:
+            p[0] = OrderedSet(mpd.find('artist',
+                                       mpd.get_tag(c_song, 'artist')))
     elif p[1] == 'B':
         c_song = mpd.get_current_song()
-        p[0] = OrderedSet(mpd.find_multiple(
-                                artist=mpd.get_tag(c_song, 'artist'),
-                                album=mpd.get_tag(c_song, 'album')))
+        if c_song is not None:
+            p[0] = OrderedSet(mpd.find_multiple(
+                                    artist=mpd.get_tag(c_song, 'artist'),
+                                    album=mpd.get_tag(c_song, 'album')))
     else:
         warning('Collection [%s] doesn\'t exist' % p[1])
         sys.exit(0)

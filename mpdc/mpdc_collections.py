@@ -41,7 +41,7 @@ def display_songs(filenames, path=None, enable_pager=False):
             lines.append('-' * term_w)
         else:
             print(header.strip())
-            print('-' * term_w)
+            print('—' * term_w)
         current_song = mpd.get_current_song()
     for song in filenames:
         if path is None:
