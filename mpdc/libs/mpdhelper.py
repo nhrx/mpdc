@@ -100,7 +100,8 @@ class MPDHelper:
         return positions
 
     def get_current_song(self):
-        return self.mpdclient.currentsong()['file']
+        song = self.mpdclient.currentsong()
+        return song.get('file', '')
 
 # Database functions
 
