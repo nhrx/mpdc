@@ -2,9 +2,8 @@
 import ast
 from collections import OrderedDict
 
-from mpdc.initialize import mpd
-from mpdc.libs.utils import is_cached, read_cache, write_cache, \
-                            repr_tags, info, warning
+from mpdc.initialize import mpd, cache
+from mpdc.libs.utils import repr_tags, info, warning
 
 
 class CollectionsManager:
@@ -15,8 +14,8 @@ class CollectionsManager:
         self.need_update = False
 
     def feed(self, force=False):
-        if is_cached('collections') and not force:
-            self.collections = read_cache('collections')
+        if cache.exists('collections') and not force:
+            self.collections = cache.read('collections')
         else:
             self.collections = raw_to_optimized(self.read())
 
@@ -62,7 +61,7 @@ class CollectionsManager:
             f.write(optimized_to_raw(self.collections))
 
     def update_cache(self):
-        write_cache('collections', self.collections)
+        cache.write('collections', self.collections)
 
 
 # Human-readable format -> dictionary of collections including MPD playlists

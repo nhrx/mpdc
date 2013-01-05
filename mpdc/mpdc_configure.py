@@ -8,10 +8,11 @@ from mpdc.libs.utils import info, warning
 def main():
     config = ConfigParser()
 
-    config.add_section('mpd')
-    config['mpd']['host'] = input('>> MPD host [localhost]: ') or 'localhost'
-    config['mpd']['port'] = input('>> MPD port [6600]: ') or '6600'
-    config['mpd']['password'] = input('>> MPD password []: ') or ''
+    config.add_section('profiles')
+    config['profiles']['host[1]'] = input('>> MPD host [localhost]: ') or \
+                                    'localhost'
+    config['profiles']['port[1]'] = input('>> MPD port [6600]: ') or '6600'
+    config['profiles']['password[1]'] = input('>> MPD password []: ') or ''
     print('\n')
 
     config.add_section('mpdc')

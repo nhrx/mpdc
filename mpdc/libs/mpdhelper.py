@@ -5,8 +5,8 @@ from subprocess import check_output, Popen, PIPE, STDOUT
 
 import mpd
 
-from mpdc.libs.utils import is_cached, read_cache, write_cache, \
-                            format_mpc_output, OrderedSet
+from mpdc.initialize import cache
+from mpdc.libs.utils import format_mpc_output, OrderedSet
 
 
 # this class uses mpc or python-mpd2 depending on which provides the best
@@ -110,8 +110,8 @@ class MPDHelper:
     def get_all_songs_tags(self, update=False):
         if self.all_songs_tags is not None and not update:
             pass
-        elif is_cached('songs_tags') and not update:
-            self.all_songs_tags = read_cache('songs_tags')
+        elif cache.exists('songs_tags') and not update:
+            self.all_songs_tags = cache.read('songs_tags')
         else:
             self.all_songs_tags = OrderedDict()
             for song in self.mpdclient.listallinfo():
@@ -122,7 +122,7 @@ class MPDHelper:
                         'title': song.get('title', ''),
                         'track': song.get('track', '')
                     }
-            write_cache('songs_tags', self.all_songs_tags)
+            cache.write('songs_tags', self.all_songs_tags)
         return self.all_songs_tags
 
     def get_tag(self, filename, tag, empty=''):

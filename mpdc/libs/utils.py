@@ -7,39 +7,37 @@ from math import sqrt
 
 
 # --------------------------------
-# Caching functions
+# Cache manager
 # --------------------------------
 
-cache_dir = os.path.expanduser('~/.cache/mpdc')
 
-def cache_last_modified(name):
-    filepath = os.path.join(cache_dir, name + '.mpdc')
-    return os.path.getmtime(filepath)
+class Cache:
+    cache_path = os.path.expanduser('~/.cache/mpdc/{profile}/{name}.mpdc')
 
+    def __init__(self, profile):
+        self.p = Cache.cache_path.format(profile=profile, name='{name}')
 
-def is_cached(name):
-    filepath = os.path.join(cache_dir, name + '.mpdc')
-    return os.path.isfile(filepath)
+    def exists(self, name):
+        return os.path.isfile(self.p.format(name=name))
 
+    def last_modified(self, name):
+        return os.path.getmtime(self.p.format(name=name))
 
-def read_cache(name):
-    filepath = os.path.join(cache_dir, name + '.mpdc')
-    try:
-        with open(filepath, 'rb') as f:
-            return pickle.load(f)
-    except IOError:
-        warning('Can\'t read cache from: ' + filepath)
+    def read(self, name):
+        try:
+            with open(self.p.format(name=name), 'rb') as f:
+                return pickle.load(f)
+        except IOError:
+            warning('Can\'t read cache from: ' + self.p.format(name=name))
 
-
-def write_cache(name, data):
-    filepath = os.path.join(cache_dir, name + '.mpdc')
-    try:
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-        with open(filepath, 'wb') as f:
-            pickle.dump(data, f)
-    except IOError:
-        warning('Can\'t write cache in: ' + filepath)
+    def write(self, name, data):
+        try:
+            if not os.path.exists(os.path.dirname(self.p)):
+                os.makedirs(os.path.dirname(self.p))
+            with open(self.p.format(name=name), 'wb') as f:
+                pickle.dump(data, f)
+        except IOError:
+            warning('Can\'t write cache in: ' + self.p.format(name=name))
 
 
 # --------------------------------
@@ -48,6 +46,7 @@ def write_cache(name, data):
 
 available_colors = {'grey': 30, 'red': 31, 'green': 32, 'yellow': 33,
                     'blue': 34, 'magenta': 35, 'cyan': 36, 'white': 37}
+
 
 def colorize(s, color, bold=False):
     if os.getenv('ANSI_COLORS_DISABLED') is None and color != 'none':

@@ -7,9 +7,8 @@ import argparse
 import subprocess
 
 from mpdc.initialize import mpd, collectionsmanager, collections, config, \
-                            colors, columns, enable_pager, pager
-from mpdc.libs.utils import input_box, write_cache, esc_quotes, info, \
-                            warning, colorize
+                            cache, colors, columns, enable_pager, pager
+from mpdc.libs.utils import input_box, esc_quotes, info, warning, colorize
 from mpdc.libs.parser import parser
 
 
@@ -229,7 +228,7 @@ def main():
     if collectionsmanager.need_update:
         collectionsmanager.write_file()
         collectionsmanager.update_cache()
-        write_cache('playlists', mpd.get_stored_playlists_info())
+        cache.write('playlists', mpd.get_stored_playlists_info())
 
 if __name__ == '__main__':
     main()

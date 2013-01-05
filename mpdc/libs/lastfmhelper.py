@@ -8,7 +8,8 @@ from urllib.parse import quote
 from urllib.request import urlopen
 from urllib.error import URLError
 
-from mpdc.libs.utils import is_cached, read_cache, similarity, warning
+from mpdc.initialize import cache
+from mpdc.libs.utils import similarity, warning
 
 
 class LastfmHelper:
@@ -34,14 +35,12 @@ class LastfmHelper:
 
     def __init__(self):
         self.timeout = 0
-        if is_cached('artists_tags'):
-            self.artists_tags = read_cache('artists_tags')
-        else:
-            self.artists_tags = {}
-        if is_cached('albums_tags'):
-            self.albums_tags = read_cache('albums_tags')
-        else:
-            self.albums_tags = {}
+        self.artists_tags = {}
+        if cache.exists('artists_tags'):
+            self.artists_tags = cache.read('artists_tags')
+        self.albums_tags = {}
+        if cache.exists('albums_tags'):
+            self.albums_tags = cache.read('albums_tags')
 
     def request(self, method, **args):
         while LastfmHelper.last_request + LastfmHelper.delay > datetime.now():

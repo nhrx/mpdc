@@ -3,8 +3,7 @@ import os
 import sys
 from configparser import ConfigParser
 
-from mpdc.libs.utils import is_cached, cache_last_modified, read_cache, \
-                            write_cache, warning, available_colors
+from mpdc.libs.utils import Cache, warning, available_colors
 
 
 config = ConfigParser()
@@ -14,13 +13,27 @@ if not config.read(os.path.expanduser('~/.mpdc')):
     sys.exit(0)
 
 try:
-    config['mpd']['host']
-    config['mpd']['password']
-    config['mpd']['port']
+    config['profiles']
+    config['profiles']['host[1]']
+    config['profiles']['port[1]']
+    config['profiles']['password[1]']
     config['mpdc']['collections']
 except KeyError:
     warning('Invalid configuration file')
     sys.exit(0)
+
+profiles = {}
+for key in config['profiles']:
+    if key == 'default':
+        continue
+    num = int(''.join(filter(str.isdigit, key)))
+    if num not in profiles:
+        profiles[num] = {
+            'host': config['profiles']['host[%d]' % num],
+            'port': config['profiles']['port[%d]' % num],
+            'password': config['profiles']['password[%d]' % num],
+        }
+profile = int(config['profiles'].get('default', 1))
 
 colors = ['none']
 if 'colors' in config['mpdc']:
@@ -42,19 +55,27 @@ pager = config['mpdc'].get('pager', 'less -R')
 
 
 # --------------------------------
+# Cache initialization
+# --------------------------------
+
+cache = Cache(profile)
+
+
+# --------------------------------
 # MPD initialization
 # --------------------------------
 
 from mpdc.libs.mpdhelper import MPDHelper
-mpd = MPDHelper(config['mpd']['host'], config['mpd']['password'],
-                config['mpd']['port'])
+mpd = MPDHelper(profiles[profile]['host'],
+                profiles[profile]['password'],
+                profiles[profile]['port'])
 
 if not mpd.connect():
     warning('Unable to connect to the MPD server')
     sys.exit(0)
 
-if (not is_cached('songs_tags') or
-    cache_last_modified('songs_tags') < int(mpd.stats()['db_update'])):
+if (not cache.exists('songs_tags') or
+    cache.last_modified('songs_tags') < int(mpd.stats()['db_update'])):
     mpd.update_cache()
 
 
@@ -74,13 +95,13 @@ collectionsmanager = CollectionsManager(config['mpdc']['collections'])
 
 update_collections = False
 
-if (not is_cached('playlists') or read_cache('playlists') !=
+if (not cache.exists('playlists') or cache.read('playlists') !=
     mpd.get_stored_playlists_info()):
-    write_cache('playlists', mpd.get_stored_playlists_info())
+    cache.write('playlists', mpd.get_stored_playlists_info())
     update_collections = True
 
-if (update_collections or not is_cached('collections')
-    or cache_last_modified('collections') <
+if (update_collections or not cache.exists('collections')
+    or cache.last_modified('collections') <
     os.path.getmtime(config['mpdc']['collections'])):
     collectionsmanager.feed(force=True)
     collectionsmanager.update_cache()

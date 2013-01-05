@@ -3,8 +3,8 @@ import argparse
 from operator import itemgetter
 from collections import Counter
 
-from mpdc.initialize import mpd, collectionsmanager, lastfm, colors
-from mpdc.libs.utils import repr_tags, info, warning, colorize, write_cache
+from mpdc.initialize import mpd, collectionsmanager, lastfm, cache, colors
+from mpdc.libs.utils import repr_tags, info, warning, colorize
 
 
 # --------------------------------
@@ -13,7 +13,7 @@ from mpdc.libs.utils import repr_tags, info, warning, colorize, write_cache
 
 def update(args):
     mpd.update_cache()
-    write_cache('playlists', mpd.get_stored_playlists_info())
+    cache.write('playlists', mpd.get_stored_playlists_info())
     collectionsmanager.feed(force=True)
     collectionsmanager.update_cache()
 
@@ -60,7 +60,7 @@ def lastfm_update_artists(args):
         artist_tags = lastfm.get_artist_tags(artist, update=True)
         if artist_tags is not None:
             tags[artist] = artist_tags
-    write_cache('artists_tags', tags)
+    cache.write('artists_tags', tags)
 
 
 def lastfm_update_albums(args):
@@ -80,7 +80,7 @@ def lastfm_update_albums(args):
         album_tags = lastfm.get_album_tags(album, artist, update=True)
         if album_tags is not None:
             tags[(album, artist)] = album_tags
-    write_cache('albums_tags', tags)
+    cache.write('albums_tags', tags)
 
 
 # --------------------------------
