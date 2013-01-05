@@ -118,10 +118,10 @@ class MPDHelper:
             for song in self.mpdclient.listallinfo():
                 if 'file' in song:
                     self.all_songs_tags[song['file']] = {
-                        'artist': song.get('artist', ''),
-                        'album': song.get('album', ''),
-                        'title': song.get('title', ''),
-                        'track': song.get('track', '')
+                        'artist': self.clear_tag(song.get('artist', '')),
+                        'album': self.clear_tag(song.get('album', '')),
+                        'title': self.clear_tag(song.get('title', '')),
+                        'track': self.clear_tag(song.get('track', ''))
                     }
             cache.write('songs_tags', self.all_songs_tags)
         return self.all_songs_tags
@@ -130,7 +130,8 @@ class MPDHelper:
         if tag in ('artist', 'album', 'title', 'track'):
             return self.get_all_songs_tags()[filename][tag] or empty
         else:
-            return self.mpdclient.listallinfo(filename)[0].get(tag, empty)
+            tag = self.mpdclient.listallinfo(filename)[0].get(tag, empty)
+            return self.clear_tag(tag)
 
     def get_tags(self, filename, tags_list=None, empty=''):
         if tags_list is None:
@@ -195,6 +196,11 @@ class MPDHelper:
         self.mpdclient.playlistclear(name)
 
 # Misc methods
+
+    def clear_tag(self, tag):
+        if isinstance(tag, (list, tuple)):
+            return tag[0]
+        return tag
 
     def set_sort(self, songs_files):
         all_songs = self.get_all_songs()
