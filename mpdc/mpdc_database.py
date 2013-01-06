@@ -47,14 +47,14 @@ def lastfm_update_artists(args):
     tags = lastfm.artists_tags
     artists = sorted(mpd.list_artists())
     extra_artists = [artist for artist in tags if artist not in artists]
-    info('Will remove datas for %s extra artist(s)' % len(extra_artists))
+    info('Will remove data for %s extra artist(s)' % len(extra_artists))
     for k in extra_artists:
         del tags[k]
     if tags:
         missing_artists = [artist for artist in artists if artist not in tags]
     else:
         missing_artists = artists
-    info('Will fetch datas for %s missing artist(s)' % len(missing_artists))
+    info('Will fetch data for %s missing artist(s)' % len(missing_artists))
     for artist in missing_artists:
         print('Fetching %s' % artist)
         artist_tags = lastfm.get_artist_tags(artist, update=True)
@@ -67,14 +67,14 @@ def lastfm_update_albums(args):
     tags = lastfm.albums_tags
     albums = sorted(mpd.list_albums(), key=itemgetter(1))
     extra_albums = [album for album in tags if album not in albums]
-    info('Will remove datas for %s extra album(s)' % len(extra_albums))
+    info('Will remove data for %s extra album(s)' % len(extra_albums))
     for k in extra_albums:
         del tags[k]
     if tags:
         missing_albums = [album for album in albums if album not in tags]
     else:
         missing_albums = albums
-    info('Will fetch datas for %s missing album(s)' % len(missing_albums))
+    info('Will fetch data for %s missing album(s)' % len(missing_albums))
     for album, artist in missing_albums:
         print('Fetching %s / %s' % (artist, album))
         album_tags = lastfm.get_album_tags(album, artist, update=True)
