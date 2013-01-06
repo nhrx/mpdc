@@ -166,6 +166,7 @@ def remove_songs(args):
 def edit(args):
     editor = os.environ.get('VISUAL') or os.environ.get('EDITOR', 'nano')
     subprocess.call([editor, config['mpdc']['collections']])
+    check(args)
 
 
 # --------------------------------
