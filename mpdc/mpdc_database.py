@@ -73,7 +73,7 @@ def lastfm_update_albums(args):
     if tags:
         missing_albums = [album for album in albums if album not in tags]
     else:
-        missing_album = albums
+        missing_albums = albums
     info('Will fetch datas for %s missing album(s)' % len(missing_albums))
     for album, artist in missing_albums:
         print('Fetching %s / %s' % (artist, album))
