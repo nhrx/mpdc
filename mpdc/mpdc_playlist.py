@@ -2,7 +2,7 @@
 import sys
 import shlex
 import argparse
-from subprocess import check_output, CalledProcessError
+import subprocess
 
 from mpdc.initialize import mpd
 from mpdc.libs.utils import input_box
@@ -47,19 +47,17 @@ def keep(args):
 
 def replace(args):
     songs = list(parser.parse(args.collection))
+    mpd.clear()
     if songs:
-        mpd.replace(songs)
-    else:
-        mpd.clear()
+        mpd.add(songs)
 
 
 def replacep(args):
     songs = list(parser.parse(args.collection))
+    mpd.clear()
     if songs:
-        mpd.replace(songs)
+        mpd.add(songs)
         mpd.play()
-    else:
-        mpd.clear()
 
 
 def play(args):
@@ -84,9 +82,9 @@ def crop(args):
 
 def mpc(args):
     try:
-        output = check_output(mpd.mpc_c + shlex.split(args.command))
+        output = subprocess.check_output(mpd.mpc_c + shlex.split(args.command))
         print(output.decode().strip())
-    except CalledProcessError:
+    except subprocess.CalledProcessError:
         pass
 
 

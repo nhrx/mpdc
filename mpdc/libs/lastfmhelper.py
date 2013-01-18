@@ -1,12 +1,12 @@
 # coding: utf-8
 import json
+import time
 import socket
+import urllib.parse
+import urllib.error
+import urllib.request
 from operator import itemgetter
-from time import sleep
 from datetime import datetime, timedelta
-from urllib.parse import quote
-from urllib.request import urlopen
-from urllib.error import URLError
 
 from mpdc.initialize import cache
 from mpdc.libs.utils import similarity, warning
@@ -15,7 +15,8 @@ from mpdc.libs.utils import similarity, warning
 class LastfmHelper:
 
     api_key = '898b9a1eff53e869c384a4504cb2ca35'
-    url = 'http://ws.audioscrobbler.com/2.0/?api_key=%s&format=json' % api_key
+    url = 'http://ws.audioscrobbler.com/2.0/?api_key={}&format=json'. \
+          format(api_key)
     delay = timedelta(0, 1)
     last_request = datetime.now() - delay
 
@@ -26,12 +27,12 @@ class LastfmHelper:
                       '&album={album}&autocorrect=1'
     }
 
-    min_similarity = 0.30
-
     bad_tags = ['beautiful', 'awesome', 'epic', 'masterpiece', 'favorite',
                 'favourite', 'recommended', 'bands i', 'band i', 'best album',
                 'my album', 'vinyl i', 'album i', 'albums i', 'album you',
                 'albums you']
+
+    min_similarity = 0.30
 
     def __init__(self):
         self.timeout = 0
@@ -44,16 +45,16 @@ class LastfmHelper:
 
     def request(self, method, **args):
         while LastfmHelper.last_request + LastfmHelper.delay > datetime.now():
-            sleep(0.1)
+            time.sleep(0.1)
 
-        args_ = {key: quote(value) for (key, value) in args.items()}
+        args_ = {key: urllib.parse.quote(value) for key, value in args.items()}
         url = LastfmHelper.url + LastfmHelper.methods[method].format(**args_)
 
         try:
-            raw_json = urlopen(url, timeout=15).read()
-        except (socket.timeout, URLError):
+            raw_json = urllib.request.urlopen(url, timeout=15).read()
+        except (socket.timeout, urllib.error.URLError):
             if self.timeout == 3:
-                warning('Can\'t send the request after 4 attempts')
+                warning('Cannot send the request after 4 attempts')
                 self.timeout = 0
                 return None
             self.timeout += 1
@@ -90,8 +91,7 @@ class LastfmHelper:
             if data is not None:
                 if 'tag' in data.get('toptags', {}):
                     return self.sanitize_tags(data['toptags']['tag'])
-                return {}
-            return None
+            return {}
 
     def get_album_tags(self, album, artist, update=False):
         if not update:
@@ -105,8 +105,7 @@ class LastfmHelper:
             if data is not None:
                 if 'tag' in data.get('toptags', {}):
                     return self.sanitize_tags(data['toptags']['tag'])
-                return {}
-            return None
+            return {}
 
     def search_artists(self, pattern):
         for artist, tags in self.artists_tags.items():
@@ -139,8 +138,8 @@ class LastfmHelper:
                 if score > LastfmHelper.min_similarity:
                     scores[artist] = score
         scores_desc = sorted(scores.items(), key=itemgetter(1), reverse=True)
-        for match in scores_desc:
-            yield match
+        for artist in scores_desc:
+            yield artist
 
     def get_similar_albums(self, query):
         if not self.albums_tags:
@@ -153,5 +152,5 @@ class LastfmHelper:
                 if score > LastfmHelper.min_similarity:
                     scores[(album, artist)] = score
         scores_desc = sorted(scores.items(), key=itemgetter(1), reverse=True)
-        for match in scores_desc:
-            yield match
+        for album in scores_desc:
+            yield album

@@ -1,6 +1,6 @@
 # coding: utf-8
+import operator
 import argparse
-from operator import itemgetter
 from collections import Counter
 
 from mpdc.initialize import mpd, collectionsmanager, lastfm, cache, colors
@@ -23,9 +23,9 @@ def check(args):
     for song, tags in mpd.get_all_songs_tags().items():
         missing_tags = [tag for tag, value in tags.items() if not value]
         if missing_tags:
-            warning('You should tag [%s]' % colorize(song, colors[0]))
-            print('missing tag(s): %s' % colorize(', '.join(missing_tags),
-                                                  colors[1 % len(colors)]))
+            warning(colorize(song, colors[0]))
+            print('missing tag(s): ' + colorize(', '.join(missing_tags),
+                                                colors[1 % len(colors)]))
         else:
             songs.append(tuple(sorted(tags.items())))
     duplicates = [dict(tags) for tags, nb in Counter(songs).items() if nb > 1]
@@ -37,49 +37,46 @@ def check(args):
                                                                tags['album'],
                                                                tags['title'],
                                                                tags['track']]),
-                                                    colors[1 % len(colors)]))
+                                                     colors[1 % len(colors)]))
             files_matched = mpd.find_multiple(**tags)
-            print('files matched: \n%s\n' % colorize('\n'.join(files_matched),
-                                                     colors[0]))
+            print('files matched:\n' + colorize('\n'.join(files_matched),
+                                                colors[0]))
 
 
 def lastfm_update_artists(args):
     tags = lastfm.artists_tags
     artists = sorted(mpd.list_artists())
     extra_artists = [artist for artist in tags if artist not in artists]
-    info('Will remove data for %s extra artist(s)' % len(extra_artists))
-    for k in extra_artists:
-        del tags[k]
+    info('{} extra artist(s)'.format(len(extra_artists)))
+    for artist in extra_artists:
+        del tags[artist]
     if tags:
         missing_artists = [artist for artist in artists if artist not in tags]
     else:
         missing_artists = artists
-    info('Will fetch data for %s missing artist(s)' % len(missing_artists))
+    info('{} missing artist(s)'.format(len(missing_artists)))
     for artist in missing_artists:
-        print('Fetching %s' % artist)
-        artist_tags = lastfm.get_artist_tags(artist, update=True)
-        if artist_tags is not None:
-            tags[artist] = artist_tags
+        print('Fetching {}'.format(artist))
+        tags[artist] = lastfm.get_artist_tags(artist, update=True)
     cache.write('artists_tags', tags)
 
 
 def lastfm_update_albums(args):
     tags = lastfm.albums_tags
-    albums = sorted(mpd.list_albums(), key=itemgetter(1))
+    albums = sorted(mpd.list_albums(), key=operator.itemgetter(1))
     extra_albums = [album for album in tags if album not in albums]
-    info('Will remove data for %s extra album(s)' % len(extra_albums))
-    for k in extra_albums:
-        del tags[k]
+    info('{} extra album(s)'.format(len(extra_albums)))
+    for album in extra_albums:
+        del tags[album]
     if tags:
         missing_albums = [album for album in albums if album not in tags]
     else:
         missing_albums = albums
-    info('Will fetch data for %s missing album(s)' % len(missing_albums))
+    info('{} missing album(s)'.format(len(missing_albums)))
     for album, artist in missing_albums:
-        print('Fetching %s / %s' % (artist, album))
-        album_tags = lastfm.get_album_tags(album, artist, update=True)
-        if album_tags is not None:
-            tags[(album, artist)] = album_tags
+        print('Fetching {} / {}'.format(artist, album))
+        tags[(album, artist)] = lastfm.get_album_tags(album,
+                                                      artist, update=True)
     cache.write('albums_tags', tags)
 
 

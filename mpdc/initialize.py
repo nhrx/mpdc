@@ -3,13 +3,13 @@ import os
 import sys
 from configparser import ConfigParser
 
-from mpdc.libs.utils import Cache, warning, available_colors
+from mpdc.libs.utils import Cache, warning, colors_c, columns_w
 
 
 config = ConfigParser()
 
 if not config.read(os.path.expanduser('~/.mpdc')):
-    warning('Can\'t read the configuration file, please run mpdc-configure')
+    warning('Cannot read the configuration file, please run mpdc-configure')
     sys.exit(0)
 
 try:
@@ -29,24 +29,22 @@ for key in config['profiles']:
     num = int(''.join(filter(str.isdigit, key)))
     if num not in profiles:
         profiles[num] = {
-            'host': config['profiles']['host[%d]' % num],
-            'port': config['profiles']['port[%d]' % num],
-            'password': config['profiles']['password[%d]' % num],
+            'host': config['profiles']['host[{}]'.format(num)],
+            'port': config['profiles']['port[{}]'.format(num)],
+            'password': config['profiles']['password[{}]'.format(num)],
         }
 profile = int(config['profiles'].get('default', 1))
 
 colors = ['none']
 if 'colors' in config['mpdc']:
-    user_colors = [s.strip() for s in config['mpdc']['colors'].split(',')]
-    if all(color in available_colors for color in user_colors):
+    user_colors = list(map(str.strip, config['mpdc']['colors'].split(',')))
+    if all(color in colors_c for color in user_colors):
         colors = user_colors
 
 columns = ['artist', 'title', 'album']
-available_columns = ['artist', 'album', 'title', 'track', 'genre', 'date',
-                     'time', 'filename']
 if 'columns' in config['mpdc']:
-    user_columns = [s.strip() for s in config['mpdc']['columns'].split(',')]
-    if (all(column in available_columns for column in user_columns)):
+    user_columns = list(map(str.strip, config['mpdc']['columns'].split(',')))
+    if all(column in columns_w for column in user_columns):
         columns = user_columns
 
 enable_command = config['mpdc'].get('enable_command', 'n') == 'y'
@@ -83,15 +81,15 @@ if (not cache.exists('songs_tags') or
 # Collections initialization
 # --------------------------------
 
+c_path = config['mpdc']['collections']
 try:
-    open(config['mpdc']['collections'], 'r')
+    open(c_path, 'r')
 except IOError:
-    warning('The collections file [%s] doesn\'t seem readable' %
-            config['mpdc']['collections'])
+    warning('Collections file [{}] does not seem readable'.format(c_path))
     sys.exit(0)
 
 from mpdc.libs.collectionsmanager import CollectionsManager
-collectionsmanager = CollectionsManager(config['mpdc']['collections'])
+collectionsmanager = CollectionsManager(c_path)
 
 update_collections = False
 
@@ -101,14 +99,11 @@ if (not cache.exists('playlists') or cache.read('playlists') !=
     update_collections = True
 
 if (update_collections or not cache.exists('collections')
-    or cache.last_modified('collections') <
-    os.path.getmtime(config['mpdc']['collections'])):
+    or cache.last_modified('collections') < os.path.getmtime(c_path)):
     collectionsmanager.feed(force=True)
     collectionsmanager.update_cache()
 else:
     collectionsmanager.feed()
-
-collections = collectionsmanager.collections
 
 
 # --------------------------------

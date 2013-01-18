@@ -2,46 +2,30 @@
 import os
 import sys
 import shlex
-import curses
 import argparse
 import subprocess
 
-from mpdc.initialize import mpd, collectionsmanager, collections, config, \
-                            cache, colors, columns, enable_pager, pager
-from mpdc.libs.utils import input_box, esc_quotes, info, warning, colorize
+from mpdc.initialize import mpd, collectionsmanager, cache, colors, columns, \
+                            enable_pager, pager
+from mpdc.libs.utils import input_box, esc_quotes, info, warning, colorize, \
+                            columns_width
 from mpdc.libs.parser import parser
-
-
-columns_w = {
-    'artist': 1,
-    'album': 1.5,
-    'title': 1.5,
-    'date': 0.25,
-    'time': 0.25,
-    'track': 0.25,
-    'genre': 0.5,
-    'filename': 2
-}
 
 
 def display_songs(filenames, path=None, enable_pager=False):
     lines = []
     if path is None:
-        curses.setupterm()
-        term_w = curses.tigetnum('cols')
-        t_w = sum(columns_w[column] for column in columns)
-        c_w = {}
+        c_w, t_w = columns_width(columns)
         header = ''
         for i, column in enumerate(columns):
-            c_w[column] = int(term_w * columns_w[column] / t_w)
-            header += colorize(column.title().ljust(c_w[column] - 1),
-                               colors[i % len(colors)], True) + ' '
+            header += colorize(column.title().ljust(c_w[column]),
+                               colors[i % len(colors)], True)
         if enable_pager:
-            lines.append(header.strip())
-            lines.append('-' * term_w)
+            lines.append(header)
+            lines.append('-' * t_w)
         else:
-            print(header.strip())
-            print('—' * term_w)
+            print(header)
+            print('—' * t_w)
         current_song = mpd.get_current_song()
     for song in filenames:
         if path is None:
@@ -54,15 +38,15 @@ def display_songs(filenames, path=None, enable_pager=False):
                     tag = mpd.get_tag(song, column, empty='<empty>')
                     if column == 'time':
                         m, s = divmod(int(tag), 60)
-                        tag = '%d:%02d' % (m, s)
+                        tag = '{}:{:02}'.format(m, s)
                 if len(tag) > c_w[column] - 1:
                     tag = tag[:c_w[column] - 2] + '…'
-                row += colorize(tag.ljust(c_w[column] - 1),
-                                colors[i % len(colors)], bold) + ' '
+                row += colorize(tag.ljust(c_w[column]),
+                                colors[i % len(colors)], bold)
             if enable_pager:
-                lines.append(row.strip())
+                lines.append(row)
             else:
-                print(row.strip())
+                print(row)
         else:
             if enable_pager:
                 lines.append(os.path.join(path, song))
@@ -76,14 +60,13 @@ def display_songs(filenames, path=None, enable_pager=False):
 
 
 def format_alias(alias):
-    if 'mpd_playlist' in collections[alias]:
-        return colorize('(playlist) ', colors[1 % len(colors)]) + alias
-    elif 'sort' in collections[alias]:
+    if 'mpd_playlist' in collectionsmanager.c[alias]:
+        return colorize('(playlist) ', colors[0]) + alias
+    elif 'sort' in collectionsmanager.c[alias]:
         return colorize('@ ', colors[0]) + alias
-    elif 'special' in collections[alias]:
+    elif 'special' in collectionsmanager.c[alias]:
         return colorize('# ', colors[0]) + alias
-    else:
-        return alias
+    return alias
 
 
 # --------------------------------
@@ -92,41 +75,42 @@ def format_alias(alias):
 
 def ls(args):
     if args.collection is None:
-        for alias in collections:
+        for alias in collectionsmanager.c:
             print(format_alias(alias))
     else:
-        display_songs(parser.parse(args.collection), args.f,
-                     (enable_pager or args.p) and not args.np)
+        songs = parser.parse(args.collection)
+        display_songs(songs, args.f, (enable_pager or args.p) and not args.np)
 
 
 def show(args):
-    if args.alias in collections:
-        if 'mpd_playlist' in collections[args.alias]:
+    if args.alias in collectionsmanager.c:
+        collection = collectionsmanager.c[args.alias]
+        if 'mpd_playlist' in collection:
             info('This collection is stored as a MPD playlist\n')
-        elif 'sort' in collections[args.alias]:
+        elif 'sort' in collection:
             info('This collection is sorted automatically\n')
-        elif 'special' in collections[args.alias]:
+        elif 'special' in collection:
             info('This is a special collection\n')
-        if 'expression' in collections[args.alias]:
-            print(collections[args.alias]['expression'])
-        if 'command' in collections[args.alias]:
-            print('command: ' + collections[args.alias]['command'])
+        if 'expression' in collection:
+            print(collection['expression'])
+        if 'command' in collection:
+            print('command: ' + collection['command'])
             print('--------\n')
-        if 'songs' in collections[args.alias]:
+        if 'songs' in collection:
             print('songs:')
             print('------')
-            display_songs(collections[args.alias]['songs'], args.f, False)
+            display_songs(collection['songs'], args.f)
     else:
-        warning('Stored collection [%s] doesn\'t exist' % args.alias)
+        warning('Stored collection [{}] does not exist'.format(args.alias))
 
 
 def check(args):
-    # will print a warning if there's a problem
+    # will print a warning if there is a problem
     print('Checking "songs" sections...')
     collectionsmanager.feed(force=True)
-    for alias in collections:
-        if 'mpd_playlist' not in collections[alias]:
-            print('Checking collection [%s]...' % alias)
+    for alias, collection in collectionsmanager.c.items():
+        if 'mpd_playlist' not in collection:
+            print('Checking collection [{}]...'.format(alias))
             parser.parse('"' + esc_quotes(alias) + '"')
 
 
@@ -135,9 +119,9 @@ def find(args):
     if args.pattern in mpd.get_all_songs():
         print('File found in:')
         print('--------------')
-        for alias in collections:
-            songs_c = parser.parse('"' + esc_quotes(alias) + '"')
-            if args.pattern in songs_c:
+        for alias in collectionsmanager.c:
+            songs = parser.parse('"' + esc_quotes(alias) + '"')
+            if args.pattern in songs:
                 print(format_alias(alias))
     # assuming it's a collection
     else:
@@ -145,9 +129,9 @@ def find(args):
         print('Collection is a subset of:')
         print('--------------------------')
         if songs:
-            for alias in collections:
-                songs_c = parser.parse('"' + esc_quotes(alias) + '"')
-                if args.pattern != alias and songs.issubset(songs_c):
+            for alias in collectionsmanager.c:
+                s = parser.parse('"' + esc_quotes(alias) + '"')
+                if args.pattern.strip(' \'"') != alias and songs.issubset(s):
                     print(format_alias(alias))
 
 
@@ -165,7 +149,7 @@ def remove_songs(args):
 
 def edit(args):
     editor = os.environ.get('VISUAL') or os.environ.get('EDITOR', 'nano')
-    subprocess.call([editor, config['mpdc']['collections']])
+    subprocess.call(shlex.split(editor) + [collectionsmanager.path])
     check(args)
 
 

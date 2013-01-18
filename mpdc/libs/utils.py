@@ -1,15 +1,15 @@
 # coding: utf-8
 import os
+import math
+import curses
 import pickle
-from collections import MutableSet
-from subprocess import check_output, CalledProcessError
-from math import sqrt
+import subprocess
+import collections
 
 
 # --------------------------------
 # Cache manager
 # --------------------------------
-
 
 class Cache:
     cache_path = os.path.expanduser('~/.cache/mpdc/{profile}/{name}.mpdc')
@@ -28,7 +28,7 @@ class Cache:
             with open(self.p.format(name=name), 'rb') as f:
                 return pickle.load(f)
         except IOError:
-            warning('Can\'t read cache from: ' + self.p.format(name=name))
+            warning('Cannot read cache from: ' + self.p.format(name=name))
 
     def write(self, name, data):
         try:
@@ -37,25 +37,23 @@ class Cache:
             with open(self.p.format(name=name), 'wb') as f:
                 pickle.dump(data, f)
         except IOError:
-            warning('Can\'t write cache in: ' + self.p.format(name=name))
+            warning('Cannot write cache in: ' + self.p.format(name=name))
 
 
 # --------------------------------
 # Colors functions
 # --------------------------------
 
-available_colors = {'grey': 30, 'red': 31, 'green': 32, 'yellow': 33,
+colors_c = {'grey': 30, 'red': 31, 'green': 32, 'yellow': 33,
                     'blue': 34, 'magenta': 35, 'cyan': 36, 'white': 37}
 
 
 def colorize(s, color, bold=False):
     if os.getenv('ANSI_COLORS_DISABLED') is None and color != 'none':
         if bold:
-            return '\033[1m\033[%dm%s\033[0m' % (available_colors[color], s)
-        else:
-            return '\033[%dm%s\033[0m' % (available_colors[color], s)
-    else:
-        return s
+            return '\033[1m\033[{}m{}\033[0m'.format(colors_c[color], s)
+        return '\033[{}m{}\033[0m'.format(colors_c[color], s)
+    return s
 
 
 def warning(s):
@@ -67,13 +65,37 @@ def info(s):
 
 
 # --------------------------------
+# Columns width
+# --------------------------------
+
+columns_w = {
+    'artist': 1,
+    'album': 1.5,
+    'title': 1.5,
+    'date': 0.25,
+    'time': 0.25,
+    'track': 0.25,
+    'genre': 0.5,
+    'filename': 2
+}
+
+
+def columns_width(columns):
+    curses.setupterm()
+    term_w = curses.tigetnum('cols')
+    t_w = sum(columns_w[column] for column in columns)
+    c_w = {column: int(term_w * columns_w[column] / t_w) for column in columns}
+    return c_w, term_w
+
+
+# --------------------------------
 # Cosine similarity
 # --------------------------------
 
 def similarity(a, b):
     scalar = sum(a[k] * b[k] for k in a if k in b)
-    norm_a = sqrt(sum(v ** 2 for v in a.values()))
-    norm_b = sqrt(sum(v ** 2 for v in b.values()))
+    norm_a = math.sqrt(sum(v ** 2 for v in a.values()))
+    norm_b = math.sqrt(sum(v ** 2 for v in b.values()))
     return scalar / (norm_a * norm_b)
 
 
@@ -86,21 +108,21 @@ def esc_quotes(s):
 
 
 def repr_tags(tags):
-    return ', '.join(['"%s"' % esc_quotes(tag) for tag in tags])
+    return ', '.join(['"' + esc_quotes(tag) + '"' for tag in tags])
 
 
 def format_mpc_output(raw):
-    return [line for line in raw.split('\n') if line != '']
+    return [line for line in raw.split('\n') if line]
 
 
 def input_box(title, message):
     try:
-        data = check_output(['zenity', '--title=' + title, '--entry',
-                             '--text=' + message, '--width', '500'])
-    except CalledProcessError:
+        data = subprocess.check_output(['zenity', '--title=' + title,
+                                        '--entry', '--text=' + message,
+                                        '--width', '500'])
+    except subprocess.CalledProcessError:
         return None
-    else:
-        return data.decode().strip()
+    return data.decode().strip()
 
 
 # --------------------------------
@@ -108,7 +130,7 @@ def input_box(title, message):
 # From http://code.activestate.com/recipes/576694/
 # --------------------------------
 
-class OrderedSet(MutableSet):
+class OrderedSet(collections.MutableSet):
     def __init__(self, iterable=None):
         self.end = end = []
         end += [None, end, end]         # sentinel node for doubly linked list

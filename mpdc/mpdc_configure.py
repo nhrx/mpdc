@@ -11,7 +11,6 @@ def configure(args):
         change_default_profile(args.switch)
         return
     config = ConfigParser()
-
     config.add_section('profiles')
     config['profiles']['host[1]'] = input('>> MPD host [localhost]: ') or \
                                     'localhost'
@@ -26,10 +25,9 @@ def configure(args):
 
     while True:
         path = input('>> Full path of the collections file: ')
-        if not os.path.isfile(path):
-            warning('Can\'t find the file: ' + path)
-        else:
+        if os.path.isfile(path):
             break
+        warning('Cannot find the file: ' + path)
     print('\n')
     config['mpdc']['collections'] = path
 
@@ -46,14 +44,14 @@ def configure(args):
             config.write(configfile)
             info('Writing configuration file in: ' + filepath)
     except IOError:
-        warning('Can\'t write configuration file in: ' + filepath)
+        warning('Cannot write configuration file in: ' + filepath)
 
 
 def change_default_profile(profile):
     config = ConfigParser()
     filepath = os.path.expanduser('~/.mpdc')
     if not config.read(filepath):
-        warning('Can\'t read the configuration file, run mpdc-configure')
+        warning('Cannot read the configuration file, run mpdc-configure')
         return
     config['profiles']['default'] = str(profile)
     try:
@@ -61,7 +59,7 @@ def change_default_profile(profile):
             config.write(configfile)
             info('Writing configuration file in: ' + filepath)
     except IOError:
-        warning('Can\'t write configuration file in: ' + filepath)
+        warning('Cannot write configuration file in: ' + filepath)
 
 
 # --------------------------------
