@@ -137,7 +137,6 @@ def p_expression_collection(p):
                               albumartist=mpd.get_tag(c_song, 'albumartist'),
                               album=mpd.get_tag(c_song, 'album')))
             if not p[0]:
-                print('oo')
                 p[0] = OrderedSet(mpd.find_multiple(
                                   artist=mpd.get_tag(c_song, 'artist'),
                                   album=mpd.get_tag(c_song, 'album')))
