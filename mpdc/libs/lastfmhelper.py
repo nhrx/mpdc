@@ -24,7 +24,9 @@ class LastfmHelper:
         'artist_tags': '&method=artist.gettoptags&artist={artist}'
                        '&autocorrect=1',
         'album_tags': '&method=album.gettoptags&artist={artist}'
-                      '&album={album}&autocorrect=1'
+                      '&album={album}&autocorrect=1',
+        'artist_top_tracks': '&method=artist.gettoptracks&artist={artist}'
+                             '&limit={limit}&autocorrect=1'
     }
 
     bad_tags = ['beautiful', 'awesome', 'epic', 'masterpiece', 'favorite',
@@ -154,3 +156,8 @@ class LastfmHelper:
         scores_desc = sorted(scores.items(), key=itemgetter(1), reverse=True)
         for album in scores_desc:
             yield album
+
+    def get_artist_top_tracks(self, artist, limit=20):
+        data = self.request('artist_top_tracks', artist=artist, limit=str(limit))
+        if data is not None:
+            return (track['name'] for track in data.get('toptracks')['track'])

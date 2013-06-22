@@ -33,8 +33,8 @@ t_MODIFIER = r'\|[ ]*\w+'
 
 
 def t_FILTER(t):
-    r'([abtngdcpfexlr]{1,2}"(?:[^"\\]|\\.)*") |' \
-    r'([abtngdcpfexlr]{1,2}\'(?:[^\'\\]|\\.)*\')'
+    r'([abtngdcpfexl]{1,2}"(?:[^"\\]|\\.)*") |' \
+    r'([abtngdcpfexl]{1,2}\'(?:[^\'\\]|\\.)*\')'
     delimiter = next(c for c in t.value if c in '"\'')
     t.value = t.value.replace('\\' + delimiter, delimiter)
     return t
@@ -276,7 +276,7 @@ def p_expression_modifier(p):
             p[0] = p[1] if include else OrderedSet()
         else:
             songs = []
-            for artist, score in lastfm.get_similar_artists(w_tags):
+            for artist, _ in lastfm.get_similar_artists(w_tags):
                 if not limit:
                     break
                 matched_songs = mpd.find('artist', artist)
@@ -315,6 +315,23 @@ def p_expression_modifier(p):
                     songs.extend(matched_songs)
                     limit -= 1
             p[0] = OrderedSet(songs)
+
+    # N-top tracks modifier
+    elif re.match(r'^p[0-9]+$', modifier):
+        p[0] = OrderedSet()
+        artists = OrderedSet(mpd.get_tag(song, 'artist') for song in p[1])
+        for artist in artists:
+            limit = int(modifier[1:])
+            for track in lastfm.get_artist_top_tracks(artist):
+                if not limit:
+                    break
+                matched_songs = mpd.search_multiple(artist=artist, title=track)
+                if len(matched_songs) > 1:
+                    matched_songs = mpd.find_multiple(artist=artist, title=track) \
+                                    or matched_songs
+                if matched_songs:
+                    p[0].add(matched_songs[0])
+                    limit -= 1
 
     else:
         warning('Modifier [{}] does not exist'.format(modifier))
